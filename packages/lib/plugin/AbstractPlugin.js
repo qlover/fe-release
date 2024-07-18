@@ -1,14 +1,16 @@
-import { Container } from '../Container.js';
-
 export default class AbstractPlugin {
-  constructor({ domain }) {
-    if (!domain) {
+  /**
+   * @param {object} props
+   * @param {string} props.domain
+   * @param {import('../Process.js').Process} props.process
+   */
+  constructor(props = {}) {
+    if (!props.domain) {
       throw new Error('Domain is required!');
     }
 
-    this.domain = domain;
-    this.log = Container.log;
-    this.shell = Container.shell;
+    this.domain = props.domain;
+    this.process = props.process;
   }
 
   init() {}
