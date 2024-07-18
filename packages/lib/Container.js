@@ -1,59 +1,50 @@
 import { Logger, Shell } from '@qlover/fe-node-lib';
-import lodash from 'lodash';
+import { Process } from './Process.js';
 
-const mapDomains = {};
-const mapPrompts = {};
-
+const instances = new Map();
 export class Container {
-  static getDomain(domain) {
-    return lodash.get(mapDomains, domain, null);
+  static register(identiter, instance) {
+    if (instances.has(identiter)) {
+      Container.log.warn(`identiter: ${identiter} already register!`);
+    }
+
+    instances.set(identiter, instance);
   }
 
   /**
-   * @param {string} domain
-   * @param {import('./plugin/AbstractPlugin.js').default} instance
+   * TODO: type
+   * @template {T}
+   * @param {new (...args: any[]) => T} identiter
+   * @returns {T}
    */
-  static registerDomain(domain, instance) {
-    if (!lodash.isNil(mapDomains[domain])) {
-      Container.log.warn(`domain: ${domain} already register!`);
+  static get(identiter) {
+    const instance = instances.get(identiter);
+
+    if (!instance) {
+      throw new Error(`identiter not register`);
     }
 
-    mapDomains[domain] = instance;
+    return instance;
   }
 
-  static getPrompt(domain, promptName) {
-    return mapPrompts[domain][promptName];
+  /**
+   * @returns {Logger}
+   */
+  static get log() {
+    return Container.get(Logger);
   }
 
-  static registerPrompt(pluginPrompts, namespace = 'default') {
-    mapPrompts[namespace] = mapPrompts[namespace] || {};
-    Object.assign(mapPrompts[namespace], pluginPrompts);
+  /**
+   * @returns {Shell}
+   */
+  static get shell() {
+    return Container.get(Shell);
   }
 
-  static async runPrompt({
-    enabled = true,
-    promptName,
-    domain = 'default',
-    task,
-    context
-  }) {
-    if (!enabled) return false;
-
-    const prompt = Container.getPrompt(domain, promptName);
-    const options = Object.assign({}, prompt, {
-      name: promptName,
-      message: prompt.message(context),
-      choices: 'choices' in prompt && prompt.choices(context),
-      transformer: 'transformer' in prompt && prompt.transformer(context)
-    });
-
-    const answers = await this.createPrompt([options]);
-
-    const doExecute = prompt.type === 'confirm' ? answers[promptName] : true;
-
-    return doExecute && task ? await task(answers[promptName]) : false;
+  /**
+   * @returns {Process}
+   */
+  static get process() {
+    return Container.get(Process);
   }
 }
-
-Container.log = new Logger();
-Container.shell = new Shell();
