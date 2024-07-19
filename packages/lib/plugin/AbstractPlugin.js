@@ -13,5 +13,12 @@ export default class AbstractPlugin {
     this.process = props.process;
   }
 
+  /**
+   * @returns {import('../Config.js').default}
+   */
+  get config() {
+    return this.process.config;
+  }
+
   init() {}
 }

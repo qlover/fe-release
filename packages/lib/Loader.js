@@ -3,6 +3,7 @@ import path, { dirname, join, resolve } from 'path';
 import { createRequire } from 'module';
 import { Container } from './Container.js';
 import { readdirSync } from 'fs';
+import { Files } from '@qlover/fe-node-lib';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -84,5 +85,11 @@ export class Loader {
       }
     }
     return [Loader.getPluginName(domain), plugin];
+  }
+
+  static loadPackageJSON() {
+    return Files.readJSON(
+      resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json')
+    );
   }
 }
