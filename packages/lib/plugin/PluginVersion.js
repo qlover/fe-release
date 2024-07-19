@@ -1,26 +1,34 @@
 import semver from 'semver';
 import AbstractPlugin from './AbstractPlugin.js';
-import { Files } from '@qlover/fe-node-lib';
-import { resolve } from 'path';
+
 export default class PluginVersion extends AbstractPlugin {
   constructor(args) {
     super({ ...args });
   }
 
   init() {
+    const context = this.config.getContext();
+
     const newVersion = this.incrementVersion({
-      latestVersion: this.getLatestVersion()
+      latestVersion: context.latestVersion,
+      increment: context.increment
     });
 
-    this.process.config.setContext({ version: newVersion });
+    this.config.setContext({ version: newVersion });
   }
 
-  getLatestVersion() {
-    const pkg = Files.readJSON(resolve('./package.json'));
-    return pkg.version;
-  }
+  /**
+   *
+   * @param {object} param0
+   * @param {string} param0.latestVersion
+   * @param {semver.ReleaseType | false} param0.increment default is 'patch'
+   * @returns
+   */
+  incrementVersion({ latestVersion, increment }) {
+    if (increment === false) {
+      return latestVersion;
+    }
 
-  incrementVersion({ latestVersion }) {
-    return semver.inc(latestVersion, 'patch');
+    return semver.inc(latestVersion, increment || 'patch');
   }
 }

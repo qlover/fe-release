@@ -5,10 +5,19 @@ import { Logger, Shell } from '@qlover/fe-node-lib';
 import { Process } from './Process.js';
 
 export class Scheduler {
-  static setup() {
+  /**
+   *
+   * @param {object} props
+   * @param {import('@qlover/fe-release').CommandArgv} props.argv
+   */
+  constructor(props) {
+    this.setup(props);
+  }
+
+  setup(props) {
     Container.register(Logger, new Logger());
     Container.register(Shell, new Shell());
-    Container.register(Config, new Config());
+    Container.register(Config, new Config(props));
 
     Container.register(
       Process,
@@ -23,7 +32,7 @@ export class Scheduler {
   /**
    * @returns {import('./plugin/AbstractPlugin.js').default[]}
    */
-  static async parsePlugins() {
+  async parsePlugins() {
     return (await Loader.getPlugins()).map((plugin) => {
       const [domain, Instance] = plugin;
       const instance = new Instance({
@@ -37,19 +46,17 @@ export class Scheduler {
     });
   }
 
-  static async release() {
-    Scheduler.setup();
-
-    const pluginsInstances = await Scheduler.parsePlugins();
+  async release() {
+    const pluginsInstances = await this.parsePlugins();
 
     for (const plugin of pluginsInstances) {
       await plugin.init();
     }
 
-    Scheduler.after();
+    this.after();
   }
 
-  static after() {
+  after() {
     Container.log.success(
       'new version is:',
       Container.process.config.context.version
