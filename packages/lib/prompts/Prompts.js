@@ -23,7 +23,7 @@ export default class Prompts {
     const options = Object.assign({}, prompt, {
       name: promptName,
       message: prompt.message(context),
-      choices: 'choices' in prompt && prompt.choices(context),
+      // choices: 'choices' in prompt && prompt.choices(context),
       transformer: 'transformer' in prompt && prompt.transformer(context)
     });
 

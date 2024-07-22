@@ -4,25 +4,26 @@ import PromptsConst from '../prompts/PromptsConst.js';
 import chalk from 'chalk';
 
 const { green, red, redBright } = chalk;
+
 const RELEASE_TYPES = ['patch', 'minor', 'major'];
 const PRERELEASE_TYPES = ['prepatch', 'preminor', 'premajor'];
 const CONTINUATION_TYPES = ['prerelease', 'pre'];
+const CHOICES = {
+  latestIsPreRelease: [CONTINUATION_TYPES[0], ...RELEASE_TYPES],
+  preRelease: PRERELEASE_TYPES,
+  default: [...RELEASE_TYPES, ...PRERELEASE_TYPES]
+};
 
-const VersionPrompt = {
-  CHOICES: {
-    latestIsPreRelease: [CONTINUATION_TYPES[0], ...RELEASE_TYPES],
-    preRelease: PRERELEASE_TYPES,
-    default: [...RELEASE_TYPES, ...PRERELEASE_TYPES]
-  },
-
-  getIncrementChoices: (context) => {
+class VersionPrompt {
+  getIncrementChoices(context) {
+    console.log(context);
     const { latestIsPreRelease, isPreRelease, preReleaseId, preReleaseBase } =
       context.version;
     const types = latestIsPreRelease
-      ? VersionPrompt.CHOICES.latestIsPreRelease
+      ? CHOICES.latestIsPreRelease
       : isPreRelease
-        ? VersionPrompt.CHOICES.preRelease
-        : VersionPrompt.CHOICES.default;
+        ? CHOICES.preRelease
+        : CHOICES.default;
     const choices = types.map((increment) => ({
       name: `${increment} (${semver.inc(context.latestVersion, increment, preReleaseId, preReleaseBase)})`,
       value: increment
@@ -33,35 +34,40 @@ const VersionPrompt = {
     };
 
     return [...choices, otherChoice];
-  },
-
-  versionTransformer: (context) => (input) =>
-    semver.valid(input)
-      ? semver.gt(input, context.latestVersion)
-        ? green(input)
-        : red(input)
-      : redBright(input),
-
-  prompt: {
-    [PromptsConst.INCREMENT_LIST]: {
-      type: 'list',
-      message: () => 'Select increment (next version):',
-      choices: (context) => VersionPrompt.getIncrementChoices(context),
-      pageSize: 9
-    },
-    [PromptsConst.VERSION]: {
-      type: 'input',
-      message: () => `Please enter a valid version:`,
-      transformer: (context) => VersionPrompt.versionTransformer(context),
-      validate: (input) =>
-        !!semver.valid(input) || 'The version must follow the semver standard.'
-    }
   }
-};
+
+  versionTransformer(context) {
+    return (input) =>
+      semver.valid(input)
+        ? semver.gt(input, context.latestVersion)
+          ? green(input)
+          : red(input)
+        : redBright(input);
+  }
+
+  get prompt() {
+    return {
+      [PromptsConst.INCREMENT_LIST]: {
+        type: 'list',
+        message: () => 'Select increment (next version):',
+        choices: (context) => this.getIncrementChoices(context),
+        pageSize: 9
+      },
+      [PromptsConst.VERSION]: {
+        type: 'input',
+        message: () => `Please enter a valid version:`,
+        transformer: (context) => this.versionTransformer(context),
+        validate: (input) =>
+          !!semver.valid(input) ||
+          'The version must follow the semver standard.'
+      }
+    };
+  }
+}
 
 export default class PluginVersion extends AbstractPlugin {
   constructor(args) {
-    super({ ...args });
+    super({ ...args, domain: 'pluginVersion' });
   }
 
   /**
@@ -83,7 +89,7 @@ export default class PluginVersion extends AbstractPlugin {
    * @returns
    */
   getPrompts() {
-    return VersionPrompt.prompt;
+    return new VersionPrompt().prompt;
   }
 
   async getIncrementedVersion(options) {

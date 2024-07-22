@@ -60,14 +60,10 @@ export default class AbstractPlugin {
    */
   task(options) {
     const context = Object.assign({}, this.config.getContext(), {
-      [this.namespace]: this.getContext()
+      [this.domain]: this.getContext()
     });
     const opts = Object.assign({}, options, { context });
-    const isException =
-      this.config.isPromptOnlyVersion &&
-      ['incrementList', 'publish', 'otp'].includes(opts.prompt);
-    return this.config.isCI && !isException
-      ? this.spinner.show(opts)
-      : this.showPrompt(opts);
+
+    return this.config.isCI ? this.spinner.show(opts) : this.showPrompt(opts);
   }
 }
