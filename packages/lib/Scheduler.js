@@ -3,7 +3,7 @@ import { Container } from './Container.js';
 import { Loader } from './Loader.js';
 import { Logger, Shell } from '@qlover/fe-node-lib';
 import { Process } from './Process.js';
-
+import Prompts from './prompts/Prompts.js';
 export class Scheduler {
   /**
    *
@@ -18,6 +18,7 @@ export class Scheduler {
     Container.register(Logger, new Logger());
     Container.register(Shell, new Shell());
     Container.register(Config, new Config(props));
+    Container.register(Prompts, new Prompts(Container.get(Config)));
 
     Container.register(
       Process,
@@ -59,7 +60,7 @@ export class Scheduler {
   after() {
     Container.log.success(
       'new version is:',
-      Container.process.config.context.version
+      Container.process.config.getContext('releaseVersion')
     );
   }
 }

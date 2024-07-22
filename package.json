@@ -38,7 +38,7 @@
     "clean": "node ./packages/bin/clean.js",
     "setup:husky": "node packages/bin/setup-husky.js",
     "commit": "node ./packages/bin/commit.js",
-    "release": "node ./packages/bin/release.js",
+    "release": "release-it",
     "update-version": "node ./packages/bin/update-version.js",
     "ts-run": "node ./packages/bin/ts-run.js",
     "clean:branch": "node ./packages/bin/clean-branch.js"
@@ -70,6 +70,7 @@
     "dotenv": "^16.4.5",
     "execa": "^9.3.0",
     "husky": "^8.0.3",
+    "inquirer": "^10.1.0",
     "is-ci": "^3.0.1",
     "lodash": "^4.17.21",
     "release-it": "^17.3.0",

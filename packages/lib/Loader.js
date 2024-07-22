@@ -62,7 +62,6 @@ export class Loader {
   /**
    *
    * @param {string} domain
-   * @returns {[string, import('./plugin/PluginVersion.js').default]}
    */
   static async load(domain) {
     let plugin = null;
@@ -70,12 +69,12 @@ export class Loader {
       const module = await import(domain);
       plugin = module.default;
     } catch (err) {
-      Container.log.error(err);
+      Container.log.verbose(err);
       try {
         const module = await import(path.join(process.cwd(), domain));
         plugin = module.default;
       } catch (err) {
-        Container.log.error(err);
+        Container.log.verbose(err);
         // In some cases or tests we might need to support legacy `require.resolve`
         const require = createRequire(process.cwd());
         const module = await import(

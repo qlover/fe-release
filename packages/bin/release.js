@@ -11,8 +11,8 @@ function getArgs() {
   program
     .option(
       '-i, --increment <type>',
-      'Increment "major", "minor", "patch", or "pre*" version; or specify version',
-      'patch'
+      'Increment "major", "minor", "patch", or "pre*" version; or specify version'
+      // 'patch'
     )
     .option('--no-increment', 'Disable version increment');
 

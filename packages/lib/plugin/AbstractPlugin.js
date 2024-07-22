@@ -1,3 +1,7 @@
+import { Container } from '../Container.js';
+import Prompts from '../prompts/Prompts.js';
+import lodash from 'lodash';
+
 export default class AbstractPlugin {
   /**
    * @param {object} props
@@ -9,9 +13,21 @@ export default class AbstractPlugin {
       throw new Error('Domain is required!');
     }
 
+    /**
+     * @type {Prompts}
+     */
+    this.prompts = Container.get(Prompts);
     this.domain = props.domain;
     this.process = props.process;
+
+    // register prompt
+    const prompts = this.getPrompts();
+    if (lodash.isPlainObject(prompts) && !lodash.isEmpty(prompts)) {
+      this.prompts.register(prompts, this.domain);
+    }
   }
+
+  getPrompts() {}
 
   /**
    * @returns {import('../Config.js').default}
@@ -21,4 +37,37 @@ export default class AbstractPlugin {
   }
 
   init() {}
+
+  getContext(path) {
+    const context = lodash.merge({}, this.options, this.context);
+    return path ? lodash.get(context, path) : context;
+  }
+
+  setContext(context) {
+    lodash.merge(this.context, context);
+  }
+
+  async showPrompt(options) {
+    options.namespace = this.domain;
+    return this.prompts.show(options);
+  }
+
+  /**
+   * switch `inquirer` task
+   *
+   * @param {object} options
+   * @param {keyof<import('../prompts/PromptsConst.js').default> | undefined} options.prompt
+   */
+  task(options) {
+    const context = Object.assign({}, this.config.getContext(), {
+      [this.namespace]: this.getContext()
+    });
+    const opts = Object.assign({}, options, { context });
+    const isException =
+      this.config.isPromptOnlyVersion &&
+      ['incrementList', 'publish', 'otp'].includes(opts.prompt);
+    return this.config.isCI && !isException
+      ? this.spinner.show(opts)
+      : this.showPrompt(opts);
+  }
 }
