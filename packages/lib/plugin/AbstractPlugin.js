@@ -1,4 +1,3 @@
-import { Container } from '../Container.js';
 import Prompts from '../prompts/Prompts.js';
 import lodash from 'lodash';
 
@@ -12,13 +11,13 @@ export default class AbstractPlugin {
     if (!props.domain) {
       throw new Error('Domain is required!');
     }
+    this.domain = props.domain;
+    this.process = props.process;
 
     /**
      * @type {Prompts}
      */
-    this.prompts = Container.get(Prompts);
-    this.domain = props.domain;
-    this.process = props.process;
+    this.prompts = this.process.container.get(Prompts);
 
     // register prompt
     const prompts = this.getPrompts();
@@ -59,11 +58,8 @@ export default class AbstractPlugin {
    * @param {keyof<import('../prompts/PromptsConst.js').default> | undefined} options.prompt
    */
   task(options) {
-    const context = Object.assign({}, this.config.getContext(), {
-      [this.domain]: this.getContext()
-    });
+    const context = Object.assign({}, this.config.getContext());
     const opts = Object.assign({}, options, { context });
-
-    return this.config.isCI ? this.spinner.show(opts) : this.showPrompt(opts);
+    return this.showPrompt(opts);
   }
 }

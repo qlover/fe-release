@@ -75,11 +75,7 @@ export default class PluginVersion extends AbstractPlugin {
    */
   async init() {
     const context = this.config.getContext();
-
-    const newVersion = await this.getIncrementedVersion({
-      latestVersion: context.latestVersion,
-      increment: context.increment
-    });
+    const newVersion = await this.getIncrementedVersion(context);
 
     this.config.setContext({ releaseVersion: newVersion });
   }

@@ -18,13 +18,13 @@ export default class Prompts {
     context
   }) {
     if (!enabled) return false;
-
     const prompt = this.prompts[namespace][promptName];
+
     const options = Object.assign({}, prompt, {
       name: promptName,
       message: prompt.message(context),
-      // choices: 'choices' in prompt && prompt.choices(context),
-      transformer: 'transformer' in prompt && prompt.transformer(context)
+      choices: prompt.choices ? prompt.choices(context) : [],
+      transformer: prompt.transformer ? prompt.transformer(context) : undefined
     });
 
     const answers = await this.createPrompt([options]);

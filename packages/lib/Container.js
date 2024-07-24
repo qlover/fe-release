@@ -1,5 +1,5 @@
 import { Logger } from '@qlover/fe-node-lib';
-
+import lodash from 'lodash';
 export class Container {
   constructor() {
     this.instances = new Map();
@@ -24,7 +24,10 @@ export class Container {
     const instance = this.instances.get(identiter);
 
     if (!instance) {
-      throw new Error(`identiter ${identiter} not register`);
+      const identiterName = lodash.isString(identiter)
+        ? identiter
+        : identiter.name;
+      throw new Error(`identiter ${identiterName} not register`);
     }
 
     return instance;

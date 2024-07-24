@@ -38,7 +38,7 @@
     "clean": "node ./packages/bin/clean.js",
     "setup:husky": "node packages/bin/setup-husky.js",
     "commit": "node ./packages/bin/commit.js",
-    "release": "release-it",
+    "release": "node ./packages/bin/release.js",
     "update-version": "node ./packages/bin/update-version.js",
     "ts-run": "node ./packages/bin/ts-run.js",
     "clean:branch": "node ./packages/bin/clean-branch.js"

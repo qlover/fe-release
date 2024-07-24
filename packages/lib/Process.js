@@ -1,6 +1,7 @@
 import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import { Container } from './Container.js';
+import Prompts from './prompts/Prompts.js';
 
 export class Process {
   constructor(props) {
@@ -13,6 +14,7 @@ export class Process {
     this.container.register(Logger, new Logger());
     this.container.register(Shell, new Shell());
     this.container.register(Config, new Config(props));
+    this.container.register(Prompts, new Prompts());
   }
 
   /**

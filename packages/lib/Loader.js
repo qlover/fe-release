@@ -65,12 +65,12 @@ export class Loader {
       const module = await import(domain);
       plugin = module.default;
     } catch (err) {
-      log.error(err);
+      // log.error(err);
       try {
         const module = await import(path.join(process.cwd(), domain));
         plugin = module.default;
       } catch (err) {
-        log.error(err);
+        // log.error(err);
         // In some cases or tests we might need to support legacy `require.resolve`
         const require = createRequire(process.cwd());
         const module = await import(
