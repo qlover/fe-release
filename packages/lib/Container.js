@@ -1,14 +1,17 @@
-import { Logger, Shell } from '@qlover/fe-node-lib';
-import { Process } from './Process.js';
+import { Logger } from '@qlover/fe-node-lib';
 
-const instances = new Map();
 export class Container {
-  static register(identiter, instance) {
-    if (instances.has(identiter)) {
-      Container.log.warn(`identiter: ${identiter} already register!`);
+  constructor() {
+    this.instances = new Map();
+    this.log = new Logger();
+  }
+
+  register(identiter, instance) {
+    if (this.instances.has(identiter)) {
+      this.log.warn(`identiter: ${identiter} already register!`);
     }
 
-    instances.set(identiter, instance);
+    this.instances.set(identiter, instance);
   }
 
   /**
@@ -17,34 +20,13 @@ export class Container {
    * @param {new (...args: any[]) => T} identiter
    * @returns {T}
    */
-  static get(identiter) {
-    const instance = instances.get(identiter);
+  get(identiter) {
+    const instance = this.instances.get(identiter);
 
     if (!instance) {
-      throw new Error(`identiter not register`);
+      throw new Error(`identiter ${identiter} not register`);
     }
 
     return instance;
-  }
-
-  /**
-   * @returns {Logger}
-   */
-  static get log() {
-    return Container.get(Logger);
-  }
-
-  /**
-   * @returns {Shell}
-   */
-  static get shell() {
-    return Container.get(Shell);
-  }
-
-  /**
-   * @returns {Process}
-   */
-  static get process() {
-    return Container.get(Process);
   }
 }

@@ -1,16 +1,12 @@
 import url, { fileURLToPath } from 'url';
 import path, { dirname, join, resolve } from 'path';
 import { createRequire } from 'module';
-import { Container } from './Container.js';
 import { readdirSync } from 'fs';
-import { Files } from '@qlover/fe-node-lib';
+import { Files, Logger } from '@qlover/fe-node-lib';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const config = {
-  plugins: {}
-};
-
+const log = new Logger();
 export class Loader {
   static readFilePlugins(targetPath) {
     try {
@@ -19,12 +15,12 @@ export class Loader {
         .filter((file) => file.startsWith('Plugin'))
         .map((file) => file.split('.').slice(0, -1).join('.'));
     } catch (err) {
-      Container.log.error('Unable to scan directory: ' + err);
+      log.error('Unable to scan directory: ' + err);
     }
     return [];
   }
 
-  static async getPlugins() {
+  static async getPlugins(injectPlugins = {}) {
     /**
      * @type {Array<[string, import('./plugin/AbstractPlugin.js').default]>}
      */
@@ -39,7 +35,7 @@ export class Loader {
     }
 
     // out
-    const pluginsDomains = Object.keys(config.plugins).filter(
+    const pluginsDomains = Object.keys(injectPlugins).filter(
       (domain) => !innerPlugins.includes(domain)
     );
 
@@ -69,12 +65,12 @@ export class Loader {
       const module = await import(domain);
       plugin = module.default;
     } catch (err) {
-      Container.log.verbose(err);
+      log.error(err);
       try {
         const module = await import(path.join(process.cwd(), domain));
         plugin = module.default;
       } catch (err) {
-        Container.log.verbose(err);
+        log.error(err);
         // In some cases or tests we might need to support legacy `require.resolve`
         const require = createRequire(process.cwd());
         const module = await import(
