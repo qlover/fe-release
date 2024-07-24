@@ -1,9 +1,5 @@
-import Config from './Config.js';
-import { Container } from './Container.js';
 import { Loader } from './Loader.js';
-import { Logger, Shell } from '@qlover/fe-node-lib';
 import { Process } from './Process.js';
-
 export class Scheduler {
   /**
    *
@@ -11,36 +7,25 @@ export class Scheduler {
    * @param {import('@qlover/fe-release').CommandArgv} props.argv
    */
   constructor(props) {
-    this.setup(props);
-  }
-
-  setup(props) {
-    Container.register(Logger, new Logger());
-    Container.register(Shell, new Shell());
-    Container.register(Config, new Config(props));
-
-    Container.register(
-      Process,
-      new Process({
-        config: Container.get(Config),
-        log: Container.get(Logger),
-        shell: Container.get(Shell)
-      })
-    );
+    this.process = new Process(props);
   }
 
   /**
    * @returns {import('./plugin/AbstractPlugin.js').default[]}
    */
   async parsePlugins() {
-    return (await Loader.getPlugins()).map((plugin) => {
+    const config = {
+      plugins: {}
+    };
+
+    return (await Loader.getPlugins(config.plugins)).map((plugin) => {
       const [domain, Instance] = plugin;
       const instance = new Instance({
         domain,
-        process: Container.get(Process)
+        process: this.process
       });
 
-      Container.register(Instance, instance);
+      this.process.container.register(Instance, instance);
 
       return instance;
     });
@@ -57,9 +42,9 @@ export class Scheduler {
   }
 
   after() {
-    Container.log.success(
+    this.process.log.success(
       'new version is:',
-      Container.process.config.context.version
+      this.process.config.getContext('releaseVersion')
     );
   }
 }
