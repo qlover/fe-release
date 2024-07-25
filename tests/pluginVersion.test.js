@@ -1,14 +1,20 @@
 import test from 'ava';
-import PluginVersion from '../packages/lib/plugin/PluginVersion.js';
+import Version from '../packages/lib/plugins/Version.js';
+import { Scheduler } from '../packages/lib/Scheduler.js';
 
-test('should be print PluginVersion domain', async (t) => {
-  const pluginVersion = new PluginVersion({ domain: 'PluginVersion' });
+const scheduler = new Scheduler({});
 
-  t.is(pluginVersion.domain, 'PluginVersion');
+test('should be print PluginVersion namespace', async (t) => {
+  const version = new Version({
+    namespace: 'PluginVersion',
+    container: scheduler.container
+  });
+
+  t.is(version.namespace, 'PluginVersion');
 });
 
 test('should increment latest version', async (t) => {
-  const v = new PluginVersion({ domain: 'PluginVersion' });
+  const v = new Version({ container: scheduler.container });
 
   const latestVersion = '1.0.0';
   t.is(v.incrementVersion({ latestVersion }), '1.0.1');

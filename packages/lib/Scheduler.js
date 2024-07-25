@@ -14,7 +14,7 @@ export class Scheduler {
     this.container = new Container();
     this.container.register(Logger, new Logger());
     this.container.register(Shell, new Shell());
-    this.container.register(Config, new Config(props));
+    this.container.register(Config, new Config({ context: props.argv }));
     this.container.register(Prompts, new Prompts());
   }
 

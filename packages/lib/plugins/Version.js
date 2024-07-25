@@ -3,6 +3,7 @@ import PluginBase from '../PluginBase.js';
 import PromptsConst from '../../config/PromptsConst.js';
 import chalk from 'chalk';
 import Config from '../Config.js';
+import lodash from 'lodash';
 
 const { green, red, redBright } = chalk;
 
@@ -66,9 +67,9 @@ class VersionPrompt {
   }
 }
 
-export default class PluginVersion extends PluginBase {
+export default class Version extends PluginBase {
   constructor(args) {
-    super({ ...args, domain: 'pluginVersion' });
+    super({ namespace: 'Version', ...args });
   }
 
   /**
@@ -79,16 +80,25 @@ export default class PluginVersion extends PluginBase {
     const config = this.container.get(Config);
     const context = config.getContext();
 
-    // extends default version
     const newContext = this.expandPreReleaseShorthand(context);
+    // extends default version
     config.setContext(newContext);
     this.setContext(newContext);
 
-    // increment task
-    const newVersion = await this.getIncrementedVersion(context);
-
-    // updatea version
-    config.setContext({ releaseVersion: newVersion });
+    if (context.increment === false) {
+      config.setContext({ releaseVersion: newContext.latestVersion });
+    } else if (context.increment && lodash.isString(context.increment)) {
+      console.log('jj', context.increment);
+      // increment task
+      const newVersion = await this.incrementVersion(context);
+      // updatea version
+      config.setContext({ releaseVersion: newVersion });
+    } else {
+      // increment task
+      const newVersion = await this.getIncrementedVersion(context);
+      // updatea version
+      config.setContext({ releaseVersion: newVersion });
+    }
   }
 
   /**

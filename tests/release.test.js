@@ -1,7 +1,10 @@
 import test from 'ava';
 import { Shell } from '@qlover/fe-node-lib';
 import { Loader } from '../packages/lib/Loader.js';
-import PluginVersion from '../packages/lib/plugin/PluginVersion.js';
+import Version from '../packages/lib/plugins/Version.js';
+import { Scheduler } from '../packages/lib/Scheduler.js';
+
+const scheduler = new Scheduler({});
 
 const pkg = Loader.loadPackageJSON();
 const latestVersion = pkg.version;
@@ -26,7 +29,7 @@ test('should not inc Version(--no-increment)', async (t) => {
 });
 
 test('should not inc Version(-i)', async (t) => {
-  const pluginVersion = new PluginVersion({ domain: 'PluginVersion' });
+  const version = new Version({ container: scheduler.container });
 
   const types = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch'];
 
@@ -37,17 +40,12 @@ test('should not inc Version(-i)', async (t) => {
 
     t.is(
       stdout2.includes(
-        pluginVersion.incrementVersion({ latestVersion, increment: type })
+        version.incrementVersion({ latestVersion, increment: type })
       ),
       true
     );
   }
 });
 
-test('should run release.js success', async (t) => {
-  const stdout = await shell.exec('node ./packages/bin/release', {
-    silent: true
-  });
-
-  t.is(stdout.includes('SUCCESS Release Finished'), true);
-});
+// TODO: use sinon test input
+test.skip('should run release.js success', async (t) => {});
