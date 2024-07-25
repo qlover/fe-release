@@ -1,4 +1,5 @@
 import inquirer from 'inquirer';
+
 export default class Prompts {
   constructor() {
     this.createPrompt = inquirer.prompt;

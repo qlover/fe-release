@@ -1,7 +1,8 @@
 import semver from 'semver';
 import AbstractPlugin from './AbstractPlugin.js';
-import PromptsConst from '../prompts/PromptsConst.js';
+import PromptsConst from '../../config/PromptsConst.js';
 import chalk from 'chalk';
+import Config from '../Config.js';
 
 const { green, red, redBright } = chalk;
 
@@ -74,17 +75,27 @@ export default class PluginVersion extends AbstractPlugin {
    * @override
    */
   async init() {
-    const context = this.config.getContext();
+    /** @type {Config} */
+    const config = this.container.get(Config);
+    const context = config.getContext();
+
+    // extends default version
+    const newContext = this.expandPreReleaseShorthand(context);
+    config.setContext(newContext);
+    this.setContext(newContext);
+
+    // increment task
     const newVersion = await this.getIncrementedVersion(context);
 
-    this.config.setContext({ releaseVersion: newVersion });
+    // updatea version
+    config.setContext({ releaseVersion: newVersion });
   }
 
   /**
    * @override
    * @returns
    */
-  getPrompts() {
+  getPrompt() {
     return new VersionPrompt().prompt;
   }
 
@@ -117,5 +128,33 @@ export default class PluginVersion extends AbstractPlugin {
             : this.task({ prompt: PromptsConst.VERSION, task: resolve })
       });
     });
+  }
+
+  expandPreReleaseShorthand(options) {
+    const { increment, preRelease, preReleaseId, snapshot, preReleaseBase } =
+      options;
+    const isPreRelease = Boolean(preRelease) || Boolean(snapshot);
+    const inc = snapshot ? 'prerelease' : increment;
+    const preId =
+      typeof preRelease === 'string'
+        ? preRelease
+        : typeof snapshot === 'string'
+          ? snapshot
+          : preReleaseId;
+    options.version = {
+      increment: inc,
+      isPreRelease,
+      preReleaseId: preId,
+      preReleaseBase
+    };
+    if (typeof snapshot === 'string' && options.git) {
+      // Pre set and hard code some options
+      options.git.tagMatch = `0.0.0-${snapshot}.[0-9]*`;
+      options.git.getLatestTagFromAllRefs = true;
+      options.git.requireBranch = '!main';
+      options.git.requireUpstream = false;
+      options.npm.ignoreVersion = true;
+    }
+    return options;
   }
 }
