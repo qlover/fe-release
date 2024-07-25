@@ -2,6 +2,10 @@ import lodash from 'lodash';
 import { Loader } from './Loader.js';
 
 const pkg = Loader.loadPackageJSON();
+
+/**
+ * @private
+ */
 export default class Config {
   constructor({ context }) {
     this.context = lodash.merge(

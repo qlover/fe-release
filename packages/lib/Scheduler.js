@@ -27,7 +27,7 @@ export class Scheduler {
   }
 
   /**
-   * @returns {import('./plugin/AbstractPlugin.js').default[]}
+   * @returns {import('./PluginBase.js').default[]}
    */
   async parsePlugins() {
     const config = {

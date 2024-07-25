@@ -7,12 +7,16 @@ import { Files, Logger } from '@qlover/fe-node-lib';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const log = new Logger();
+
+/**
+ * @private
+ */
 export class Loader {
   static readFilePlugins(targetPath) {
     try {
       const files = readdirSync(targetPath);
       return files
-        .filter((file) => file.startsWith('Plugin'))
+        .filter((file) => file.endsWith('.js'))
         .map((file) => file.split('.').slice(0, -1).join('.'));
     } catch (err) {
       log.error('Unable to scan directory: ' + err);
@@ -22,14 +26,14 @@ export class Loader {
 
   static async getPlugins(injectPlugins = {}) {
     /**
-     * @type {Array<[string, import('./plugin/AbstractPlugin.js').default]>}
+     * @type {Array<[string, import('./PluginBase.js').default]>}
      */
     const plugins = [];
-    const innerPlugins = Loader.readFilePlugins(join(__dirname, 'plugin'));
-
+    const innerPlugins = Loader.readFilePlugins(join(__dirname, 'plugins'));
+    console.log('jj innerPlugins', innerPlugins);
     // inner
     for (const innerPlugin of innerPlugins) {
-      const pluginRoot = resolve(__dirname, `plugin/${innerPlugin}.js`);
+      const pluginRoot = resolve(__dirname, `plugins/${innerPlugin}.js`);
       const result = await Loader.load(pluginRoot);
       plugins.push(result);
     }

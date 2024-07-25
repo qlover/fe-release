@@ -1,10 +1,10 @@
 import { Logger } from '@qlover/fe-node-lib';
-import Prompts from '../Prompts.js';
+import Prompts from './Prompts.js';
 import lodash from 'lodash';
 
 /**
  * @private
- * @param {import('../Container.js').Container} container
+ * @param {import('./Container.js').Container} container
  * @param {object} param1
  * @param {Prompts} param1.prompt
  * @param {string} param1.namespace
@@ -17,11 +17,11 @@ function setup(container, { namespace, prompt }) {
   }
 }
 
-export default class AbstractPlugin {
+export default class PluginBase {
   /**
    * @param {object} props
    * @param {string} props.namespace
-   * @param {import('../Container.js').Container} props.container
+   * @param {import('./Container.js').Container} props.container
    */
   constructor({ namespace, container } = {}) {
     if (!namespace) {
@@ -80,7 +80,7 @@ export default class AbstractPlugin {
    * compose process task
    *
    * @param {object} options
-   * @param {keyof<import('../../config/PromptsConst.js').default> | undefined} options.prompt
+   * @param {keyof<import('../config/PromptsConst.js').default> | undefined} options.prompt
    */
   task(options) {
     const opts = Object.assign({}, options, { context: this.getContext() });

@@ -1,5 +1,5 @@
 import semver from 'semver';
-import AbstractPlugin from './AbstractPlugin.js';
+import PluginBase from '../PluginBase.js';
 import PromptsConst from '../../config/PromptsConst.js';
 import chalk from 'chalk';
 import Config from '../Config.js';
@@ -66,7 +66,7 @@ class VersionPrompt {
   }
 }
 
-export default class PluginVersion extends AbstractPlugin {
+export default class PluginVersion extends PluginBase {
   constructor(args) {
     super({ ...args, domain: 'pluginVersion' });
   }
