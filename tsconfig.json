@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // 允许
     "allowJs": true,
     "baseUrl": ".",
     "rootDir": "./",
@@ -20,18 +19,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node",
-    "paths": {
-      "config/*": [
-        "./config/*"
-      ]
-    }
-  },
-  // 保证 ts-node 执行正确
-  // https://github.com/TypeStrong/ts-node/issues/422
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true
   },
   "include": [
     "./packages/types",
