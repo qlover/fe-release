@@ -3,6 +3,7 @@ import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import { Container } from './Container.js';
 import Prompts from './Prompts.js';
+import Spinner from './Spinner.js';
 
 export class Scheduler {
   /**
@@ -12,18 +13,21 @@ export class Scheduler {
    */
   constructor(props) {
     this.container = new Container();
-    this.container.register(Logger, new Logger());
-    this.container.register(Shell, new Shell());
-    this.container.register(Config, new Config({ context: props.argv }));
+    const config = new Config({ context: props.argv });
+    const logger = new Logger({
+      isCI: config.isCI
+    });
+
+    // logger.test(JSON.stringify(config.context));
+
+    this.container.register(Logger, logger);
+    this.container.register(Shell, new Shell({ log: logger }));
+    this.container.register(Config, config);
     this.container.register(Prompts, new Prompts());
-  }
+    this.container.register(Spinner, new Spinner());
 
-  get log() {
-    return this.container.get(Logger);
-  }
-
-  get config() {
-    return this.container.get(Config);
+    this.config = config;
+    this.log = logger;
   }
 
   /**

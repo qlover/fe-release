@@ -30,7 +30,7 @@ export class Loader {
      */
     const plugins = [];
     const innerPlugins = Loader.readFilePlugins(join(__dirname, 'plugins'));
-    console.log('jj innerPlugins', innerPlugins);
+
     // inner
     for (const innerPlugin of innerPlugins) {
       const pluginRoot = resolve(__dirname, `plugins/${innerPlugin}.js`);

@@ -14,7 +14,11 @@ function getArgs() {
       'Increment "major", "minor", "patch", or "pre*" version; or specify version'
       // 'patch'
     )
-    .option('--no-increment', 'Disable version increment');
+    .option('--no-increment', 'Disable version increment')
+    .option(
+      '--ci',
+      'No prompts, no user interaction; activated automatically in CI environments'
+    );
 
   program.parse();
 

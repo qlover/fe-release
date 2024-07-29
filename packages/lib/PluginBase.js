@@ -1,5 +1,7 @@
 import { Logger } from '@qlover/fe-node-lib';
 import Prompts from './Prompts.js';
+import Spinner from './Spinner.js';
+import Config from './Config.js';
 import lodash from 'lodash';
 
 /**
@@ -80,10 +82,21 @@ export default class PluginBase {
    * compose process task
    *
    * @param {object} options
-   * @param {keyof<import('../config/PromptsConst.js').default> | undefined} options.prompt
+   * @param {keyof<import('../config/PromptsConst.js').default> | undefined} options.type
+   * @param {string} options.label spinner show label template string
    */
   task(options) {
+    /** @type {Config} */
+    const config = this.container.get(Config);
     const opts = Object.assign({}, options, { context: this.getContext() });
+
+    // spinner
+    if (config.isCI) {
+      /** @type {Spinner} */
+      const spinner = this.container.get(Spinner);
+      return spinner.show(opts);
+    }
+
     return this.taskPrompt(opts);
   }
 }

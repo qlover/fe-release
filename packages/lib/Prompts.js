@@ -13,14 +13,13 @@ export default class Prompts {
 
   async show({
     enabled = true,
-    prompt: promptName,
+    type: promptName,
     namespace = 'default',
     task,
     context
   }) {
     if (!enabled) return false;
     const prompt = this.prompts[namespace][promptName];
-
     const options = Object.assign({}, prompt, {
       name: promptName,
       message: prompt.message(context),
