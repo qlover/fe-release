@@ -1,11 +1,11 @@
-import { Logger } from '@qlover/fe-node-lib';
 import lodash from 'lodash';
+
+const log = console;
 
 export const format = (template = '', context = {}) => {
   try {
     return lodash.template(template)(context);
   } catch (error) {
-    const log = new Logger();
     log.error(
       `Unable to render template with context:\n${template}\n${JSON.stringify(context)}`
     );
