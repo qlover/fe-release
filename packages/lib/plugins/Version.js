@@ -1,6 +1,6 @@
 import semver from 'semver';
 import PluginBase from '../PluginBase.js';
-import PromptsConst from '../../config/PromptsConst.js';
+import TaskTypes from '../../config/TaskTypes.js';
 import chalk from 'chalk';
 import Config from '../Config.js';
 import lodash from 'lodash';
@@ -48,13 +48,13 @@ class VersionPrompt {
 
   get prompt() {
     return {
-      [PromptsConst.INCREMENT_LIST]: {
+      [TaskTypes.INCREMENT_LIST]: {
         type: 'list',
         message: () => 'Select increment (next version):',
         choices: (context) => this.getIncrementChoices(context),
         pageSize: 9
       },
-      [PromptsConst.VERSION]: {
+      [TaskTypes.VERSION]: {
         type: 'input',
         message: () => `Please enter a valid version:`,
         transformer: (context) => this.versionTransformer(context),
@@ -129,7 +129,7 @@ export default class Version extends PluginBase {
   promptIncrementVersion(options) {
     return new Promise((resolve) => {
       this.task({
-        type: PromptsConst.INCREMENT_LIST,
+        type: TaskTypes.INCREMENT_LIST,
         // eslint-disable-next-line no-template-curly-in-string
         label: 'Increment Version',
         task: async (increment) => {
@@ -139,7 +139,7 @@ export default class Version extends PluginBase {
 
           return increment
             ? resolve(this.incrementVersion({ ...options, increment }))
-            : this.task({ type: PromptsConst.VERSION, task: resolve });
+            : this.task({ type: TaskTypes.VERSION, task: resolve });
         }
       });
     });

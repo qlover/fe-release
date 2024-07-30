@@ -1,5 +1,5 @@
 import { oraPromise } from 'ora';
-import { format } from './utils.js';
+import ContextFormat from './utils/ContextFormat.js';
 
 export default class Spinner {
   constructor() {
@@ -9,9 +9,14 @@ export default class Spinner {
   show({ enabled = true, task, label, context }) {
     if (!enabled) return Promise.resolve();
 
-    const awaitTask = task();
+    let awaitTask = task();
 
-    const text = format(label, context);
+    // whether Promise?
+    if (!(awaitTask instanceof Promise)) {
+      awaitTask = Promise.resolve(awaitTask);
+    }
+
+    const text = ContextFormat.format(label, context);
     this.ora(awaitTask, text);
 
     return awaitTask;

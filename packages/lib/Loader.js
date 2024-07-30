@@ -91,4 +91,21 @@ export class Loader {
       resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json')
     );
   }
+
+  static async reducesPluginMaps(pluginMaps = {}, handler) {
+    const plugins = [];
+    const pluginsDomains = Object.keys(pluginMaps);
+
+    for (const domain of pluginsDomains) {
+      const [namespace, Plugin] = await Loader.load(domain);
+
+      if (handler) {
+        const props = pluginMaps[domain];
+        const instance = await handler({ namespace, Plugin, props });
+        instance && plugins.push(instance);
+      }
+    }
+
+    return plugins;
+  }
 }

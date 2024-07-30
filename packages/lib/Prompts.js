@@ -11,15 +11,16 @@ export default class Prompts {
     Object.assign(this.prompts[namespace], pluginPrompts);
   }
 
-  async show({
-    enabled = true,
-    type: promptName,
-    namespace = 'default',
-    task,
-    context
-  }) {
+  get(promptType, namespace = 'default') {
+    if (!this.prompts[namespace]) {
+      return;
+    }
+    return this.prompts[namespace][promptType];
+  }
+
+  async show({ enabled = true, type: promptName, namespace, task, context }) {
     if (!enabled) return false;
-    const prompt = this.prompts[namespace][promptName];
+    const prompt = this.get(promptName, namespace);
     const options = Object.assign({}, prompt, {
       name: promptName,
       message: prompt.message(context),
