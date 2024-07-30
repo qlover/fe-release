@@ -18,7 +18,6 @@ const CHOICES = {
 
 class VersionPrompt {
   getIncrementChoices(context) {
-    console.log(context);
     const { latestIsPreRelease, isPreRelease, preReleaseId, preReleaseBase } =
       context.version;
     const types = latestIsPreRelease
@@ -77,27 +76,26 @@ export default class Version extends PluginBase {
    */
   async init() {
     /** @type {Config} */
-    const config = this.container.get(Config);
-    const context = config.getContext();
+    this.config = this.container.get(Config);
+    const context = this.config.getContext();
 
     const newContext = this.expandPreReleaseShorthand(context);
     // extends default version
-    config.setContext(newContext);
+    this.config.setContext(newContext);
     this.setContext(newContext);
 
     if (context.increment === false) {
-      config.setContext({ releaseVersion: newContext.latestVersion });
+      this.config.setContext({ releaseVersion: newContext.latestVersion });
     } else if (context.increment && lodash.isString(context.increment)) {
-      console.log('jj', context.increment);
       // increment task
       const newVersion = await this.incrementVersion(context);
       // updatea version
-      config.setContext({ releaseVersion: newVersion });
+      this.config.setContext({ releaseVersion: newVersion });
     } else {
       // increment task
       const newVersion = await this.getIncrementedVersion(context);
       // updatea version
-      config.setContext({ releaseVersion: newVersion });
+      this.config.setContext({ releaseVersion: newVersion });
     }
   }
 
@@ -131,11 +129,18 @@ export default class Version extends PluginBase {
   promptIncrementVersion(options) {
     return new Promise((resolve) => {
       this.task({
-        prompt: PromptsConst.INCREMENT_LIST,
-        task: (increment) =>
-          increment
+        type: PromptsConst.INCREMENT_LIST,
+        // eslint-disable-next-line no-template-curly-in-string
+        label: 'Increment Version',
+        task: async (increment) => {
+          if (this.config.isCI) {
+            return resolve(this.incrementVersion(options));
+          }
+
+          return increment
             ? resolve(this.incrementVersion({ ...options, increment }))
-            : this.task({ prompt: PromptsConst.VERSION, task: resolve })
+            : this.task({ type: PromptsConst.VERSION, task: resolve });
+        }
       });
     });
   }

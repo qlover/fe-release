@@ -1,6 +1,6 @@
 import lodash from 'lodash';
 import { Loader } from './Loader.js';
-
+import isCI from 'is-ci';
 const pkg = Loader.loadPackageJSON();
 
 /**
@@ -10,6 +10,7 @@ export default class Config {
   constructor({ context }) {
     this.context = lodash.merge(
       {
+        ci: isCI,
         latestVersion: this.latestVersion
       },
       context
@@ -27,5 +28,9 @@ export default class Config {
 
   get latestVersion() {
     return pkg.version || '0.0.0';
+  }
+
+  get isCI() {
+    return !!this.context.ci;
   }
 }
