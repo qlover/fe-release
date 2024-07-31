@@ -2,8 +2,7 @@ import { Loader } from './Loader.js';
 import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import { Container } from './Container.js';
-import Prompts from './Prompts.js';
-import Spinner from './Spinner.js';
+import Tasks from './Tasks.js';
 
 export class Scheduler {
   /**
@@ -23,8 +22,7 @@ export class Scheduler {
     this.container.register(Logger, logger);
     this.container.register(Shell, new Shell({ log: logger }));
     this.container.register(Config, config);
-    this.container.register(Prompts, new Prompts());
-    this.container.register(Spinner, new Spinner());
+    this.container.register(Tasks, new Tasks(config));
 
     this.config = config;
     this.log = logger;
