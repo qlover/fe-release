@@ -1,9 +1,10 @@
 import semver from 'semver';
 import PluginBase from '../PluginBase.js';
-import PromptsConst from '../../config/PromptsConst.js';
+import { TasksAction, TasksTypes } from '../../config/TasksConst.js';
 import chalk from 'chalk';
 import Config from '../Config.js';
 import lodash from 'lodash';
+import { sleep } from '../utils.js';
 
 const { green, red, redBright } = chalk;
 
@@ -16,8 +17,8 @@ const CHOICES = {
   default: [...RELEASE_TYPES, ...PRERELEASE_TYPES]
 };
 
-class VersionPrompt {
-  getIncrementChoices(context) {
+class VersionTaskUtil {
+  static getIncrementChoices(context) {
     const { latestIsPreRelease, isPreRelease, preReleaseId, preReleaseBase } =
       context.version;
     const types = latestIsPreRelease
@@ -37,7 +38,7 @@ class VersionPrompt {
     return [...choices, otherChoice];
   }
 
-  versionTransformer(context) {
+  static versionTransformer(context) {
     return (input) =>
       semver.valid(input)
         ? semver.gt(input, context.latestVersion)
@@ -46,23 +47,25 @@ class VersionPrompt {
         : redBright(input);
   }
 
-  get prompt() {
-    return {
-      [PromptsConst.INCREMENT_LIST]: {
+  static getTaskList() {
+    return [
+      {
+        id: TasksAction.INCREMENT_LIST,
         type: 'list',
         message: () => 'Select increment (next version):',
-        choices: (context) => this.getIncrementChoices(context),
+        choices: (context) => VersionTaskUtil.getIncrementChoices(context),
         pageSize: 9
       },
-      [PromptsConst.VERSION]: {
+      {
+        id: TasksAction.VERSION,
         type: 'input',
         message: () => `Please enter a valid version:`,
-        transformer: (context) => this.versionTransformer(context),
+        transformer: (context) => VersionTaskUtil.versionTransformer(context),
         validate: (input) =>
           !!semver.valid(input) ||
           'The version must follow the semver standard.'
       }
-    };
+    ];
   }
 }
 
@@ -73,42 +76,77 @@ export default class Version extends PluginBase {
 
   /**
    * @override
+   * @returns {import('@qlover/fe-release').TaskInterface[] | import('@qlover/fe-release').TaskInterface}
    */
-  async init() {
-    /** @type {Config} */
-    this.config = this.container.get(Config);
-    const context = this.config.getContext();
-
-    const newContext = this.expandPreReleaseShorthand(context);
-    // extends default version
-    this.config.setContext(newContext);
-    this.setContext(newContext);
-
-    if (context.increment === false) {
-      this.config.setContext({ releaseVersion: newContext.latestVersion });
-    } else if (context.increment && lodash.isString(context.increment)) {
-      // increment task
-      const newVersion = await this.incrementVersion(context);
-      // updatea version
-      this.config.setContext({ releaseVersion: newVersion });
-    } else {
-      // increment task
-      const newVersion = await this.getIncrementedVersion(context);
-      // updatea version
-      this.config.setContext({ releaseVersion: newVersion });
-    }
+  getTaskList() {
+    return VersionTaskUtil.getTaskList();
   }
 
   /**
    * @override
-   * @returns
    */
-  getPrompt() {
-    return new VersionPrompt().prompt;
+  async init() {
+    /** @type {Config} */
+    const config = this.container.get(Config);
+    const context = config.getContext();
+
+    const newContext = this.expandPreReleaseShorthand(context);
+    // extends default version
+    config.setContext(newContext);
+    this.setContext(newContext);
+
+    await this.triggerIncrementVersion();
   }
 
-  async getIncrementedVersion(options) {
-    return await this.promptIncrementVersion(options);
+  async incrementTask({ type, value: increment }) {
+    /** @type {Config} */
+    const config = this.container.get(Config);
+    const context = config.getContext();
+
+    // spinner auto inc version
+    if (type === TasksTypes.AUTO) {
+      await sleep(1000);
+      const newVersion = this.incrementVersion(context);
+      config.setContext({ releaseVersion: newVersion });
+      return;
+    }
+
+    if (increment) {
+      const newVersion = this.incrementVersion({ ...context, increment });
+      config.setContext({ releaseVersion: newVersion });
+      return;
+    }
+
+    return this.dispatchTask({
+      id: TasksAction.VERSION,
+      run: (args) => {
+        config.setContext({ releaseVersion: args.value });
+      }
+    });
+  }
+
+  async triggerIncrementVersion() {
+    /** @type {Config} */
+    const config = this.container.get(Config);
+    const context = config.getContext();
+
+    if (context.increment === false) {
+      config.setContext({ releaseVersion: context.latestVersion });
+      return;
+    }
+
+    if (context.increment && lodash.isString(context.increment)) {
+      // increment task
+      const newVersion = await this.incrementVersion(context);
+      // updatea version
+      config.setContext({ releaseVersion: newVersion });
+      return;
+    }
+
+    return this.dispatchTask({
+      id: TasksAction.INCREMENT_LIST,
+      run: this.incrementTask.bind(this)
+    });
   }
 
   /**
@@ -124,25 +162,6 @@ export default class Version extends PluginBase {
     }
 
     return semver.inc(latestVersion, increment || 'patch');
-  }
-
-  promptIncrementVersion(options) {
-    return new Promise((resolve) => {
-      this.task({
-        type: PromptsConst.INCREMENT_LIST,
-        // eslint-disable-next-line no-template-curly-in-string
-        label: 'Increment Version',
-        task: async (increment) => {
-          if (this.config.isCI) {
-            return resolve(this.incrementVersion(options));
-          }
-
-          return increment
-            ? resolve(this.incrementVersion({ ...options, increment }))
-            : this.task({ type: PromptsConst.VERSION, task: resolve });
-        }
-      });
-    });
   }
 
   expandPreReleaseShorthand(options) {
