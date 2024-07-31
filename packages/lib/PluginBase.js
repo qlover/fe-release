@@ -1,21 +1,19 @@
 import { Logger, Shell } from '@qlover/fe-node-lib';
-import Prompts from './Prompts.js';
-import Spinner from './Spinner.js';
 import Config from './Config.js';
+import Tasks from './Tasks.js';
 import lodash from 'lodash';
 
 /**
  * @private
  * @param {import('./Container.js').Container} container
  * @param {object} param1
- * @param {Prompts} param1.prompt
- * @param {string} param1.namespace
+ * @param {object} param1.tasks
  */
-function setup(container, { namespace, prompt }) {
-  if (lodash.isPlainObject(prompt) && !lodash.isEmpty(prompt)) {
-    /** @type {Prompts} */
-    const prompts = container.get(Prompts);
-    prompts.register(prompt, namespace);
+function setup(container, { tasks }) {
+  if (tasks) {
+    /** @type {Tasks} */
+    const tTasks = container.get(Tasks);
+    tTasks.register(tasks);
   }
 }
 
@@ -40,20 +38,29 @@ export default class PluginBase {
     this.config = container.get(Config);
     /** @type {Logger} */
     this.log = container.get(Logger);
+    /** @type {Tasks} */
+    this.tasks = container.get(Tasks);
 
     /**
      * only every plugin context
      */
     this.context = {};
 
-    setup(container, { namespace, prompt: this.getPrompt() });
+    setup(container, { tasks: this.getTaskList() });
   }
 
   /**
    * get a prompt task object.
    * @abstract
+   * @returns {import('@qlover/fe-release').TaskInterface[] | import('@qlover/fe-release').TaskInterface}
    */
-  getPrompt() {}
+  getTaskList() {}
+
+  /**
+   * plugin init logic
+   * @abstract
+   */
+  init() {}
 
   getContext(path) {
     const context = lodash.merge({}, this.config.getContext(), this.context);
@@ -64,56 +71,9 @@ export default class PluginBase {
     lodash.merge(this.context, context);
   }
 
-  /**
-   * plugin init logic
-   * @abstract
-   */
-  init() {
-    this.container.get(Logger).warn(`${this.namespace} init not implements`);
-  }
-
-  /**
-   * only `prompt` task
-   *
-   * @private
-   * @param {object} options
-   * @returns
-   */
-  async taskPrompt(options) {
-    /** @type {Prompts} */
-    const prompts = this.container.get(Prompts);
-
-    if (!prompts.get(options.type, this.namespace)) {
-      this.log.warn(`Prompt Task ${options.type} not found!`);
-      return;
-    }
-
-    options.namespace = this.namespace;
-    return prompts.show(options);
-  }
-
-  /**
-   * compose process task
-   *
-   * @param {object} options
-   * @param {keyof<import('../config/TaskTypes.js').default> | undefined} options.type task type and also prompt type
-   * @param {() => void | Promise<any>} options.task
-   * @param {string} options.label spinner show label template string
-   */
-  task(options) {
-    /** @type {Config} */
-    const config = this.container.get(Config);
-    const opts = Object.assign({}, options, { context: this.getContext() });
-
-    // spinner
-    if (config.isCI) {
-      /** @type {Spinner} */
-      const spinner = this.container.get(Spinner);
-      opts.label = opts.label || opts.type;
-      return spinner.show(opts);
-    }
-
-    return this.taskPrompt(opts);
+  dispatchTask(options) {
+    const taskOpts = Object.assign({}, { context: this.getContext() }, options);
+    return this.tasks.dispatch(taskOpts);
   }
 
   /**
