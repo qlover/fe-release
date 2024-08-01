@@ -4,15 +4,15 @@ import { Loader } from '../packages/lib/Loader.js';
 import Version from '../packages/lib/plugins/Version.js';
 import { Scheduler } from '../packages/lib/Scheduler.js';
 
-const pkg = Loader.loadPackageJSON();
+const pkg = Loader.getLocalPackageJSON();
 const latestVersion = pkg.version;
 const scheduler = new Scheduler();
 
 const shell = new Shell();
 
-test('should not inc Version(--no-increment --no-commit) ci evn', async (t) => {
+test('should not inc Version(--no-increment --no-git.commit) ci evn', async (t) => {
   const stdout = await shell.exec(
-    'node ./packages/bin/release --no-increment --ci --no-commit',
+    'node ./packages/bin/release --no-increment --ci --no-git.commit',
     {
       silent: true
     }
@@ -20,7 +20,7 @@ test('should not inc Version(--no-increment --no-commit) ci evn', async (t) => {
   t.is(stdout.includes(pkg.version), true);
 
   const stdout2 = await shell.exec(
-    'node ./packages/bin/release -i major --no-increment --no-commit --ci',
+    'node ./packages/bin/release -i major --no-increment --no-git.commit --ci',
     {
       silent: true
     }
@@ -35,7 +35,7 @@ test('should not inc Version(-i)', async (t) => {
 
   for (const type of types) {
     const stdout2 = await shell.exec(
-      `node ./packages/bin/release -i ${type} --no-commit --ci`,
+      `node ./packages/bin/release -i ${type} --no-git.commit --ci`,
       {
         silent: true
       }

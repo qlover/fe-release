@@ -9,3 +9,5 @@ export const TasksTypes = {
   MUTUAL: 'MUTUAL',
   AUTO: 'AUTO'
 };
+
+export const ConfigExts = ['.json', '.js', '.ts', '.cjs', '.yaml', '.yml'];

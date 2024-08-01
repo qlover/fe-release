@@ -7,19 +7,18 @@ import Tasks from './Tasks.js';
 export class Scheduler {
   /**
    *
-   * @param {object} props
-   * @param {import('@qlover/fe-release').CommandArgv} props.argv
+   * @param {object} options
    */
-  constructor(props = {}) {
+  constructor(options = {}) {
     this.container = new Container();
-    const config = new Config({ context: props.argv, config: props.config });
+    const config = new Config({ context: options });
     const logger = new Logger({
       isCI: config.isCI,
-      debug: false,
+      debug: options.debug,
       dryRun: false
     });
 
-    // logger.test(JSON.stringify(config.context));
+    logger.debug(config.options);
 
     this.container.register(Logger, logger);
     this.container.register(Shell, new Shell({ log: logger }));

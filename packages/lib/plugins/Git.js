@@ -15,7 +15,6 @@ const GitCMD = {
 
 const noStdout = { silent: false };
 
-const commitMessage = 'Release ${releaseVersion}';
 export default class Git extends PluginBase {
   constructor(args) {
     super({ namespace: 'Git', ...args });
@@ -29,9 +28,9 @@ export default class Git extends PluginBase {
       id: TasksAction.GIT_COMMIT,
       type: 'confirm',
       message: (context) =>
-        `Commit (${ContextFormat.truncateLines(ContextFormat.format(commitMessage, context), 1, ' [...]')})?`,
+        `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
       default: true,
-      run: () => this.commit()
+      run: () => this.commit(this.getContext('git.commitMessage'))
     };
   }
 
@@ -45,13 +44,12 @@ export default class Git extends PluginBase {
 
     const context = this.getContext();
 
-    if (context.commit !== false) {
+    if (context.git.commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
   }
 
   async commit(message) {
-    message = message || commitMessage;
     const msg = ContextFormat.format(message, this.getContext());
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
