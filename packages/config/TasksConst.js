@@ -1,8 +1,10 @@
 export const TasksAction = {
-  INCREMENT_LIST: 'increment_list',
-  VERSION: 'version',
-  CHECK_GIT: 'check_git',
-  GIT_COMMIT: 'git_commit'
+  INCREMENT_LIST: 'Increment List',
+  VERSION: 'Version',
+  CHECK_GIT: 'Check Git',
+  GIT_COMMIT: 'Git Commit',
+  GIT_TAG: 'Git Tag',
+  GIT_PUSH: 'Git Push'
 };
 
 export const TasksTypes = {

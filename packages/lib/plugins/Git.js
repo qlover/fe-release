@@ -10,10 +10,12 @@ const GitCMD = {
   getRemoteUrl: 'git remote get-url ${remoteNameOrUrl}',
   configGetRemotUrl: 'git config --get remote.${remoteNameOrUrl}.url',
   fetchRepo: 'git fetch',
-  gitCommit: 'git commit'
+  gitCommit: 'git commit',
+  gitTags: 'git describe --tags',
+  deleteLocalTags: 'git tag -d $(git tag -l)'
 };
 
-const noStdout = { silent: false };
+const noStdout = { silent: true };
 
 export default class Git extends PluginBase {
   constructor(args) {
@@ -24,14 +26,30 @@ export default class Git extends PluginBase {
    * @override
    */
   getTaskList() {
-    return {
-      id: TasksAction.GIT_COMMIT,
-      type: 'confirm',
-      message: (context) =>
-        `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
-      default: true,
-      run: () => this.commit(this.getContext('git.commitMessage'))
-    };
+    return [
+      {
+        id: TasksAction.GIT_COMMIT,
+        type: 'confirm',
+        message: (context) =>
+          `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
+        default: true,
+        run: () => this.commit(this.getContext('git.commitMessage'))
+      },
+      {
+        id: TasksAction.GIT_TAG,
+        type: 'confirm',
+        message: (context) =>
+          `Tag (${ContextFormat.format(context.tagTemplate, context)})?`,
+        run: () => this.tag(),
+        default: true
+      },
+      {
+        id: TasksAction.GIT_PUSH,
+        type: 'confirm',
+        message: () => 'Push?',
+        default: true
+      }
+    ];
   }
 
   /**
@@ -41,12 +59,45 @@ export default class Git extends PluginBase {
     // if (!(await this.isGitRepo())) {
     //   throw new Error('not a git repo');
     // }
+    const { git, releaseVersion } = this.getContext();
 
-    const context = this.getContext();
+    const latestTag = (await this.getLatestTagName()) || releaseVersion;
+    const tagTemplate =
+      git.tagName ||
+      ((latestTag || '').match(/^v/)
+        ? 'v${releaseVersion}'
+        : '${releaseVersion}');
 
-    if (context.git.commit !== false) {
+    this.config.setContext({ latestTag, tagTemplate });
+
+    if (git.commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
+
+    if (git.tag !== false) {
+      await this.dispatchTask({ id: TasksAction.GIT_TAG });
+    }
+  }
+
+  getLatestTagName() {
+    const context = this.getContext();
+
+    const match = ContextFormat.format(
+      context.tagMatch || context.tagName || '${releaseVersion}',
+      context
+    );
+
+    const exclude = context.tagExclude
+      ? ` --exclude=${ContextFormat.format(context.tagExclude, context)}`
+      : '';
+
+    return this.exec(
+      `${GitCMD.gitTags} --match=${match} --abbrev=0${exclude}`,
+      noStdout
+    ).then(
+      (stdout) => stdout || null,
+      () => null
+    );
   }
 
   async commit(message) {
@@ -70,5 +121,29 @@ export default class Git extends PluginBase {
         throw new Error(error);
       }
     }
+  }
+
+  tag({ tagName, annotation: tagAnnotation } = {}) {
+    const context = this.getContext();
+    tagName = tagName || context.tagName || context.releaseVersion;
+    tagAnnotation = tagAnnotation || context.tagAnnotation;
+    this.log.debug(tagName, tagAnnotation);
+    const message = ContextFormat.format(tagAnnotation, context);
+    return this.exec([
+      'git',
+      'tag',
+      '--annotate',
+      '--message',
+      message,
+      tagName
+    ])
+      .then(() => this.setContext({ isTagged: true }))
+      .catch((err) => {
+        if (/tag '.+' already exists/.test(err)) {
+          this.log.warn(`Tag "${tagName}" already exists`);
+        } else {
+          throw err;
+        }
+      });
   }
 }

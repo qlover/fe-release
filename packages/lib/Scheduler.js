@@ -62,7 +62,8 @@ export class Scheduler {
     const config = {
       plugins: {
         './plugins/Version.js': {},
-        './plugins/Git.js': {}
+        './plugins/Git.js': {},
+        './plugins/GitHub.js': {}
       }
     };
 

@@ -1,7 +1,10 @@
 {
   "git": {
     "commit": true,
-    "commitMessage": "FE-Release ${releaseVersion}"
+    "commitMessage": "FE-Release ${releaseVersion}",
+    "tag": true,
+    "tagName": null,
+    "tagAnnotation": "Release ${releaseVersion}"
   },
   "github": {
     "release": true
