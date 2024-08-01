@@ -85,6 +85,7 @@ export default class Version extends PluginBase {
    * @override
    */
   async init() {
+    this.log.debug('version init');
     /** @type {Config} */
     const config = this.container.get(Config);
     const context = config.getContext();
@@ -93,7 +94,12 @@ export default class Version extends PluginBase {
     // extends default version
     config.setContext(newContext);
     this.setContext(newContext);
+  }
 
+  /**
+   * @override
+   */
+  async process() {
     await this.triggerIncrementVersion();
   }
 

@@ -41,7 +41,13 @@ export default class Git extends PluginBase {
     // if (!(await this.isGitRepo())) {
     //   throw new Error('not a git repo');
     // }
+    this.log.debug('git init');
+  }
 
+  /**
+   * @override
+   */
+  async process() {
     const context = this.getContext();
 
     if (context.git.commit !== false) {

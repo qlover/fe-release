@@ -18,6 +18,7 @@ declare module '@qlover/fe-release' {
      */
     enabled?: boolean;
 
+    runType?: 'prompt' | 'spinner';
     /**
      * 每个任务的 id, 唯一标识符
      */

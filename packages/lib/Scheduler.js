@@ -3,7 +3,7 @@ import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import { Container } from './Container.js';
 import Tasks from './Tasks.js';
-
+// import Thread from './utils/Thread.js';
 export class Scheduler {
   /**
    *
@@ -30,32 +30,32 @@ export class Scheduler {
   }
 
   /**
-   * @private
-   * @param {*} pluginInstance
-   */
-  async startUpPlugin(pluginInstance, pluginProps) {
-    await pluginInstance.init(pluginProps);
-  }
-
-  /**
    * @returns {import('./PluginBase.js').default[]}
    */
-  eachPlugins(config) {
+  async eachPlugins(config) {
     const container = this.container;
 
     const onPlugin = async ({ namespace, Plugin, props }) => {
       const instance = new Plugin({ namespace, ...props, container });
 
+      // await Thread.sleep(1000);
+      await instance.init(props);
+
       // use Instance register(or string name)
-      container.register(Plugin, instance);
-
-      // start up Instance
-      await this.startUpPlugin(instance, props);
-
-      return instance;
+      return container.register(Plugin, instance);
     };
 
-    return Loader.reducesPluginMaps(config.plugins, onPlugin);
+    const tasks = container.get(Tasks);
+
+    const plugins = await tasks.dispatch({
+      id: 'Init Plugins',
+      run: () => Loader.reducesPluginMaps(config.plugins, onPlugin)
+    });
+
+    // process plugins
+    for (const plugin of plugins) {
+      await plugin.process();
+    }
   }
 
   async release() {

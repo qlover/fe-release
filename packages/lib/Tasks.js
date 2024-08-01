@@ -90,7 +90,7 @@ export default class Tasks {
       return Promise.resolve();
     }
 
-    if (!this.config.isCI) {
+    if (runType === 'prompt') {
       return this.actionPrompt(props);
     }
 
