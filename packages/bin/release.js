@@ -19,7 +19,8 @@ function getArgs() {
     .option(
       '--ci',
       'No prompts, no user interaction; activated automatically in CI environments'
-    );
+    )
+    .option('--debug', 'Print verbose and debug output');
 
   program.parse();
 

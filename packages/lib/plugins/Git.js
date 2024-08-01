@@ -1,6 +1,6 @@
 /* eslint-disable no-template-curly-in-string */
 import PluginBase from '../PluginBase.js';
-import TaskTypes from '../../config/TaskTypes.js';
+import { TasksAction } from '../../config/TasksConst.js';
 import ContextFormat from '../utils/ContextFormat.js';
 
 const GitCMD = {
@@ -26,7 +26,7 @@ export default class Git extends PluginBase {
    */
   getTaskList() {
     return {
-      id: TaskTypes.GIT_COMMIT,
+      id: TasksAction.GIT_COMMIT,
       type: 'confirm',
       message: (context) =>
         `Commit (${ContextFormat.truncateLines(ContextFormat.format(commitMessage, context), 1, ' [...]')})?`,
@@ -46,7 +46,7 @@ export default class Git extends PluginBase {
     const context = this.getContext();
 
     if (context.commit !== false) {
-      await this.dispatchTask({ id: TaskTypes.GIT_COMMIT });
+      await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
   }
 
