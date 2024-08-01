@@ -1,12 +1,12 @@
-import url, { fileURLToPath } from 'url';
-import path, { dirname, join, resolve } from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
+import { parse, dirname, join, resolve } from 'path';
 import { createRequire } from 'module';
 import { readdirSync } from 'fs';
-import { Files, Logger } from '@qlover/fe-node-lib';
+import { Files } from '@qlover/fe-node-lib';
+import { cosmiconfigSync } from 'cosmiconfig';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const log = new Logger();
+const fePkg = Files.readJSON(resolve(__dirname, '../../package.json'));
 
 /**
  * @private
@@ -19,7 +19,7 @@ export class Loader {
         .filter((file) => file.endsWith('.js'))
         .map((file) => file.split('.').slice(0, -1).join('.'));
     } catch (err) {
-      log.error('Unable to scan directory: ' + err);
+      console.error('Unable to scan directory: ' + err);
     }
     return [];
   }
@@ -53,7 +53,7 @@ export class Loader {
 
   static getPluginName(pluginName) {
     if (pluginName.startsWith('.')) {
-      return path.parse(pluginName).name;
+      return parse(pluginName).name;
     }
 
     return pluginName;
@@ -71,14 +71,14 @@ export class Loader {
     } catch (err) {
       // log.error(err);
       try {
-        const module = await import(path.join(process.cwd(), domain));
+        const module = await import(join(process.cwd(), domain));
         plugin = module.default;
       } catch (err) {
         // log.error(err);
         // In some cases or tests we might need to support legacy `require.resolve`
         const require = createRequire(process.cwd());
         const module = await import(
-          url.pathToFileURL(require.resolve(domain, { paths: [process.cwd()] }))
+          pathToFileURL(require.resolve(domain, { paths: [process.cwd()] }))
         );
         plugin = module.default;
       }
@@ -86,10 +86,22 @@ export class Loader {
     return [Loader.getPluginName(domain), plugin];
   }
 
+  /**
+   * load fe-release project package.json
+   * @private
+   * @returns
+   */
+  static getLocalPackageJSON() {
+    return fePkg;
+  }
+
+  /**
+   * load outter project package.json
+   * @private
+   * @returns
+   */
   static loadPackageJSON() {
-    return Files.readJSON(
-      resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json')
-    );
+    return Files.readJSON(resolve('./package.json'));
   }
 
   static async reducesPluginMaps(pluginMaps = {}, handler) {
@@ -107,5 +119,31 @@ export class Loader {
     }
 
     return plugins;
+  }
+
+  /**
+   * get outter fe-release config
+   * @param {object} param0
+   * @param {string | false} param0.file
+   * @param {string} param0.dir
+   * @returns
+   */
+  static searchFeReleaseConfig({
+    moduleName,
+    file,
+    dir = process.cwd(),
+    searchPlaces,
+    loaders
+  }) {
+    const temp = {};
+    if (file === false) return temp;
+    const explorer = cosmiconfigSync(moduleName, { searchPlaces, loaders });
+    const result = file ? explorer.load(file) : explorer.search(dir);
+
+    if (result && typeof result.config === 'string') {
+      throw new Error(`Invalid configuration file at ${result.filepath}`);
+    }
+
+    return result && result.config ? result.config : temp;
   }
 }

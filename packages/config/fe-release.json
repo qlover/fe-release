@@ -1,6 +1,7 @@
 {
   "git": {
-    "commit": ""
+    "commit": true,
+    "commitMessage": "FE-Release ${releaseVersion}"
   },
   "github": {
     "release": true
