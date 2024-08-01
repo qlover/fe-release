@@ -15,6 +15,7 @@ function getArgs() {
       // 'patch'
     )
     .option('--no-increment', 'Disable version increment')
+    .option('--no-commit', 'Disable commit modified')
     .option(
       '--ci',
       'No prompts, no user interaction; activated automatically in CI environments'
@@ -32,7 +33,7 @@ async function main() {
 
   await scheduler.release();
 
-  log.success('Release Finished');
+  log.info('Release Finished');
 }
 
 main();

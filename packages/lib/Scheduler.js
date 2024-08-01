@@ -10,11 +10,13 @@ export class Scheduler {
    * @param {object} props
    * @param {import('@qlover/fe-release').CommandArgv} props.argv
    */
-  constructor(props) {
+  constructor(props = {}) {
     this.container = new Container();
-    const config = new Config({ context: props.argv });
+    const config = new Config({ context: props.argv, config: props.config });
     const logger = new Logger({
-      isCI: config.isCI
+      isCI: config.isCI,
+      debug: false,
+      dryRun: false
     });
 
     // logger.test(JSON.stringify(config.context));
@@ -29,41 +31,48 @@ export class Scheduler {
   }
 
   /**
+   * @private
+   * @param {*} pluginInstance
+   */
+  async startUpPlugin(pluginInstance, pluginProps) {
+    await pluginInstance.init(pluginProps);
+  }
+
+  /**
    * @returns {import('./PluginBase.js').default[]}
    */
-  async parsePlugins() {
-    const config = {
-      plugins: {}
-    };
+  eachPlugins(config) {
+    const container = this.container;
 
-    return (await Loader.getPlugins(config.plugins)).map((plugin) => {
-      const [domain, Instance] = plugin;
-      const instance = new Instance({
-        namespace: domain,
-        container: this.container
-      });
+    const onPlugin = async ({ namespace, Plugin, props }) => {
+      const instance = new Plugin({ namespace, ...props, container });
 
       // use Instance register(or string name)
-      this.container.register(Instance, instance);
+      container.register(Plugin, instance);
+
+      // start up Instance
+      await this.startUpPlugin(instance, props);
 
       return instance;
-    });
+    };
+
+    return Loader.reducesPluginMaps(config.plugins, onPlugin);
   }
 
   async release() {
-    const pluginsInstances = await this.parsePlugins();
+    const config = {
+      plugins: {
+        './plugins/Version.js': {},
+        './plugins/Git.js': {}
+      }
+    };
 
-    for (const plugin of pluginsInstances) {
-      await plugin.init();
-    }
+    await this.eachPlugins(config);
 
     this.after();
   }
 
   after() {
-    this.log.success(
-      'new version is:',
-      this.config.getContext('releaseVersion')
-    );
+    this.log.info('new version is:', this.config.getContext('releaseVersion'));
   }
 }
