@@ -7,7 +7,8 @@ const pkg = Loader.loadPackageJSON();
  * @private
  */
 export default class Config {
-  constructor({ context }) {
+  constructor({ context, config }) {
+    this.options = lodash.merge({}, config);
     this.context = lodash.merge(
       {
         ci: isCI,

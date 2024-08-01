@@ -3,8 +3,8 @@ import PluginBase from '../PluginBase.js';
 import { TasksAction, TasksTypes } from '../../config/TasksConst.js';
 import chalk from 'chalk';
 import Config from '../Config.js';
+import Thread from '../utils/Thread.js';
 import lodash from 'lodash';
-import { sleep } from '../utils.js';
 
 const { green, red, redBright } = chalk;
 
@@ -105,7 +105,7 @@ export default class Version extends PluginBase {
 
     // spinner auto inc version
     if (type === TasksTypes.AUTO) {
-      await sleep(1000);
+      await Thread.sleep(1000);
       const newVersion = this.incrementVersion(context);
       config.setContext({ releaseVersion: newVersion });
       return;

@@ -79,7 +79,8 @@ export default class PluginBase {
   /**
    * run command
    * @param {string | string[]} command
-   * @param {Record<string, any>} options
+   * @param {object} options
+   * @param {boolean} options.silent
    * @param {Record<string, any>} context
    * @returns
    */

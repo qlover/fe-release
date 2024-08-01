@@ -10,11 +10,13 @@ export class Scheduler {
    * @param {object} props
    * @param {import('@qlover/fe-release').CommandArgv} props.argv
    */
-  constructor(props) {
+  constructor(props = {}) {
     this.container = new Container();
-    const config = new Config({ context: props.argv });
+    const config = new Config({ context: props.argv, config: props.config });
     const logger = new Logger({
-      isCI: config.isCI
+      isCI: config.isCI,
+      debug: false,
+      dryRun: false
     });
 
     // logger.test(JSON.stringify(config.context));
@@ -71,9 +73,6 @@ export class Scheduler {
   }
 
   after() {
-    this.log.success(
-      'new version is:',
-      this.config.getContext('releaseVersion')
-    );
+    this.log.info('new version is:', this.config.getContext('releaseVersion'));
   }
 }

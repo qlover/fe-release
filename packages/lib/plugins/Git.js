@@ -13,6 +13,8 @@ const GitCMD = {
   gitCommit: 'git commit'
 };
 
+const noStdout = { silent: false };
+
 const commitMessage = 'Release ${releaseVersion}';
 export default class Git extends PluginBase {
   constructor(args) {
@@ -22,14 +24,14 @@ export default class Git extends PluginBase {
   /**
    * @override
    */
-  getPrompt() {
+  getTaskList() {
     return {
-      [TaskTypes.GIT_COMMIT]: {
-        type: 'confirm',
-        message: (context) =>
-          `Commit (${ContextFormat.truncateLines(ContextFormat.format(commitMessage, context), 1, ' [...]')})?`,
-        default: true
-      }
+      id: TaskTypes.GIT_COMMIT,
+      type: 'confirm',
+      message: (context) =>
+        `Commit (${ContextFormat.truncateLines(ContextFormat.format(commitMessage, context), 1, ' [...]')})?`,
+      default: true,
+      run: () => this.commit()
     };
   }
 
@@ -41,10 +43,11 @@ export default class Git extends PluginBase {
     //   throw new Error('not a git repo');
     // }
 
-    await this.task({
-      type: TaskTypes.GIT_COMMIT,
-      task: () => this.commit()
-    });
+    const context = this.getContext();
+
+    if (context.commit !== false) {
+      await this.dispatchTask({ id: TaskTypes.GIT_COMMIT });
+    }
   }
 
   async commit(message) {
@@ -53,9 +56,11 @@ export default class Git extends PluginBase {
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
     try {
-      await this.exec(GitCMD.gitCommit.split(' ').concat(commitMessageArgs));
+      await this.exec(
+        GitCMD.gitCommit.split(' ').concat(commitMessageArgs),
+        noStdout
+      );
     } catch (error) {
-      this.log.log(error);
       if (
         /nothing (added )?to commit/.test(error) ||
         /nichts zu committen/.test(error)
