@@ -4,12 +4,12 @@ import { TasksAction } from '../../config/TasksConst.js';
 import ContextFormat from '../utils/ContextFormat.js';
 
 const CMD = {
-  isRepo: 'git rev-parse --git-dir',
-  branchName: 'git rev-parse --abbrev-ref HEAD',
-  remoteByBranch: 'git config --get branch.${branch}.remote',
-  getRemoteUrl: 'git remote get-url ${remoteNameOrUrl}',
-  configGetRemotUrl: 'git config --get remote.${remoteNameOrUrl}.url',
-  fetchRepo: 'git fetch',
+  // isRepo: 'git rev-parse --git-dir',
+  // branchName: 'git rev-parse --abbrev-ref HEAD',
+  // remoteByBranch: 'git config --get branch.${branch}.remote',
+  // getRemoteUrl: 'git remote get-url ${remoteNameOrUrl}',
+  // configGetRemotUrl: 'git config --get remote.${remoteNameOrUrl}.url',
+  // fetchRepo: 'git fetch',
   gitCommit: 'git commit',
   gitTags: 'git describe --tags',
   gitPush: 'git push --follow-tags',
@@ -128,10 +128,7 @@ export default class Git extends PluginBase {
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
     try {
-      await this.exec(
-        CMD.gitCommit.split(' ').concat(commitMessageArgs),
-        noStdout
-      );
+      await this.exec(cmds(CMD.gitCommit, commitMessageArgs), noStdout);
       this.setContext({ isCommited: true });
     } catch (error) {
       if (
