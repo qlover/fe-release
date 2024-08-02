@@ -6,6 +6,10 @@ export default class Github extends PluginBase {
   }
 
   init() {
-    this.log.debug('github init');
+    this.debug('github init');
+  }
+
+  async process() {
+    this.debug(this.getContext(), this.context);
   }
 }

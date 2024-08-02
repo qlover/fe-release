@@ -2,6 +2,7 @@ import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import Tasks from './Tasks.js';
 import lodash from 'lodash';
+import { EOL } from 'node:os';
 
 /**
  * @private
@@ -47,6 +48,12 @@ export default class PluginBase {
     this.context = {};
 
     setup(container, { tasks: this.getTaskList() });
+  }
+
+  debug(...args) {
+    // In some places, the beginning of debug will be overwritten by a spinner line break,
+    // and a line break will be added uniformly
+    this.log.debug(EOL, ...args);
   }
 
   /**

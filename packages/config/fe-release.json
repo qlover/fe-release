@@ -7,6 +7,8 @@
     "tagAnnotation": "Release ${releaseVersion}"
   },
   "github": {
-    "release": true
+    "release": false,
+    "releaseName": "Release ${version}",
+    "releaseNotes": null
   }
 }

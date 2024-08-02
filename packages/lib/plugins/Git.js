@@ -3,7 +3,7 @@ import PluginBase from '../PluginBase.js';
 import { TasksAction } from '../../config/TasksConst.js';
 import ContextFormat from '../utils/ContextFormat.js';
 
-const GitCMD = {
+const CMD = {
   isRepo: 'git rev-parse --git-dir',
   branchName: 'git rev-parse --abbrev-ref HEAD',
   remoteByBranch: 'git config --get branch.${branch}.remote',
@@ -12,9 +12,11 @@ const GitCMD = {
   fetchRepo: 'git fetch',
   gitCommit: 'git commit',
   gitTags: 'git describe --tags',
+  gitPush: 'git push --follow-tags',
   deleteLocalTags: 'git tag -d $(git tag -l)'
 };
-
+const cmds = (cmd, args = []) => cmd.split(' ').concat(args);
+const invalidPushRepoRe = /^\S+@/;
 const noStdout = { silent: true };
 
 export default class Git extends PluginBase {
@@ -48,6 +50,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_PUSH,
         type: 'confirm',
         message: () => 'Push?',
+        run: () => this.push(),
         default: true
       }
     ];
@@ -60,7 +63,9 @@ export default class Git extends PluginBase {
     // if (!(await this.isGitRepo())) {
     //   throw new Error('not a git repo');
     // }
+  }
 
+  async processBefore() {
     const { git, releaseVersion } = this.getContext();
 
     const latestTag = (await this.getLatestTagName()) || releaseVersion;
@@ -77,7 +82,9 @@ export default class Git extends PluginBase {
    * @override
    */
   async process() {
-    const { commit, tag } = this.getContext('git');
+    await this.processBefore();
+    // task
+    const { commit, tag, push } = this.getContext('git');
 
     if (commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
@@ -86,6 +93,12 @@ export default class Git extends PluginBase {
     if (tag !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_TAG });
     }
+
+    if (push !== false) {
+      await this.dispatchTask({ id: TasksAction.GIT_PUSH });
+    }
+
+    this.config.setContext(this.context);
   }
 
   getLatestTagName() {
@@ -101,7 +114,7 @@ export default class Git extends PluginBase {
       : '';
 
     return this.exec(
-      `${GitCMD.gitTags} --match=${match} --abbrev=0${exclude}`,
+      `${CMD.gitTags} --match=${match} --abbrev=0${exclude}`,
       noStdout
     ).then(
       (stdout) => stdout || null,
@@ -116,10 +129,10 @@ export default class Git extends PluginBase {
 
     try {
       await this.exec(
-        GitCMD.gitCommit.split(' ').concat(commitMessageArgs),
+        CMD.gitCommit.split(' ').concat(commitMessageArgs),
         noStdout
       );
-      this.setContext({ commited: true });
+      this.setContext({ isCommited: true });
     } catch (error) {
       if (
         /nothing (added )?to commit/.test(error) ||
@@ -134,27 +147,71 @@ export default class Git extends PluginBase {
     }
   }
 
-  tag({ tagName, annotation: tagAnnotation } = {}) {
+  async tag({ tagName, annotation: tagAnnotation } = {}) {
     const context = this.getContext();
     tagName = tagName || context.tagName || context.releaseVersion;
     tagAnnotation = tagAnnotation || context.tagAnnotation;
-    this.log.debug(tagName, tagAnnotation);
     const message = ContextFormat.format(tagAnnotation, context);
-    return this.exec([
-      'git',
-      'tag',
-      '--annotate',
-      '--message',
-      message,
-      tagName
-    ])
-      .then(() => this.setContext({ isTagged: true }))
-      .catch((err) => {
-        if (/tag '.+' already exists/.test(err)) {
-          this.log.warn(`Tag "${tagName}" already exists`);
-        } else {
-          throw err;
-        }
-      });
+
+    try {
+      await this.exec([
+        'git',
+        'tag',
+        '--annotate',
+        '--message',
+        message,
+        tagName
+      ]);
+      this.setContext({ isTagged: true });
+    } catch (err) {
+      if (/tag '.+' already exists/.test(err)) {
+        this.log.warn(`Tag "${tagName}" already exists`);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  async hasUpstreamBranch() {
+    const ref = await this.exec('git symbolic-ref HEAD', noStdout);
+    const branch = await this.exec(
+      `git for-each-ref --format="%(upstream:short)" ${ref}`,
+      noStdout
+    ).catch(() => null);
+    return Boolean(branch);
+  }
+
+  async getBranchName() {
+    try {
+      return this.exec('git rev-parse --abbrev-ref HEAD', noStdout);
+    } catch {}
+  }
+
+  isRemoteName(remoteUrlOrName) {
+    return remoteUrlOrName && !remoteUrlOrName.includes('/');
+  }
+
+  async getPushArgs(pushRepo) {
+    if (pushRepo && !this.isRemoteName(pushRepo)) {
+      // Use (only) `pushRepo` if it's configured and looks like a url
+      return [pushRepo];
+    } else if (!(await this.hasUpstreamBranch())) {
+      // Start tracking upstream branch (`pushRepo` is a name if set)
+      return [
+        '--set-upstream',
+        pushRepo || 'origin',
+        await this.getBranchName()
+      ];
+    } else if (pushRepo && !invalidPushRepoRe.test(pushRepo)) {
+      return [pushRepo];
+    } else {
+      return [];
+    }
+  }
+
+  async push() {
+    const pushArgs = await this.getPushArgs();
+    const result = await this.exec(cmds(CMD.gitPush, pushArgs));
+    this.debug(result);
   }
 }
