@@ -1,7 +1,7 @@
 {
   "git": {
     "commit": true,
-    "commitMessage": "FE-Release ${releaseVersion}"
+    "commitMessage": "chore: FE-Release ${releaseVersion}"
   },
   "github": {
     "release": true
