@@ -33,6 +33,7 @@ export default class Git extends PluginBase {
         message: (context) =>
           `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
         default: true,
+        // not exec run methods if choose no, but prompt type alwarys exec
         run: () => this.commit(this.getContext('git.commitMessage'))
       },
       {
@@ -59,12 +60,7 @@ export default class Git extends PluginBase {
     // if (!(await this.isGitRepo())) {
     //   throw new Error('not a git repo');
     // }
-  }
 
-  /**
-   * @override
-   */
-  async process() {
     const { git, releaseVersion } = this.getContext();
 
     const latestTag = (await this.getLatestTagName()) || releaseVersion;
@@ -75,12 +71,19 @@ export default class Git extends PluginBase {
         : '${releaseVersion}');
 
     this.config.setContext({ latestTag, tagTemplate });
+  }
 
-    if (git.commit !== false) {
+  /**
+   * @override
+   */
+  async process() {
+    const { commit, tag } = this.getContext('git');
+
+    if (commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
 
-    if (git.tag !== false) {
+    if (tag !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_TAG });
     }
   }
@@ -107,6 +110,7 @@ export default class Git extends PluginBase {
   }
 
   async commit(message) {
+    message = message || this.getContext('git.commitMessage');
     const msg = ContextFormat.format(message, this.getContext());
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
@@ -115,6 +119,7 @@ export default class Git extends PluginBase {
         GitCMD.gitCommit.split(' ').concat(commitMessageArgs),
         noStdout
       );
+      this.setContext({ commited: true });
     } catch (error) {
       if (
         /nothing (added )?to commit/.test(error) ||
