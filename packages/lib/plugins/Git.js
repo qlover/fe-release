@@ -59,6 +59,12 @@ export default class Git extends PluginBase {
     // if (!(await this.isGitRepo())) {
     //   throw new Error('not a git repo');
     // }
+  }
+
+  /**
+   * @override
+   */
+  async process() {
     const { git, releaseVersion } = this.getContext();
 
     const latestTag = (await this.getLatestTagName()) || releaseVersion;

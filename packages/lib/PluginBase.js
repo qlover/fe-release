@@ -62,6 +62,12 @@ export default class PluginBase {
    */
   init() {}
 
+  /**
+   * plugin run logic
+   * @abstract
+   */
+  process() {}
+
   getContext(path) {
     const context = lodash.merge({}, this.config.getContext(), this.context);
     return path ? lodash.get(context, path) : context;
@@ -72,7 +78,13 @@ export default class PluginBase {
   }
 
   dispatchTask(options) {
-    const taskOpts = Object.assign({}, { context: this.getContext() }, options);
+    const taskOpts = Object.assign(
+      {
+        runType: this.config.isCI ? 'spinner' : 'prompt'
+      },
+      { context: this.getContext() },
+      options
+    );
     return this.tasks.dispatch(taskOpts);
   }
 
