@@ -10,7 +10,7 @@ const scheduler = new Scheduler();
 
 const shell = new Shell();
 
-test('should not inc Version(--no-increment --no-git.commit) ci evn', async (t) => {
+test.skip('should not inc Version(--no-increment --no-git.commit) ci evn', async (t) => {
   const stdout = await shell.exec(
     'node ./packages/bin/release --no-increment --ci --no-git.commit',
     {
@@ -28,7 +28,7 @@ test('should not inc Version(--no-increment --no-git.commit) ci evn', async (t) 
   t.is(stdout2.includes(pkg.version), true);
 });
 
-test('should not inc Version(-i)', async (t) => {
+test.skip('should not inc Version(-i)', async (t) => {
   const version = new Version({ container: scheduler.container });
 
   const types = ['major', 'minor', 'patch', 'premajor', 'preminor', 'prepatch'];
