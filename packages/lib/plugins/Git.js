@@ -30,7 +30,8 @@ export default class Git extends PluginBase {
       message: (context) =>
         `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
       default: true,
-      run: () => this.commit(this.getContext('git.commitMessage'))
+      // not exec run methods if choose no, but prompt type alwarys exec
+      run: () => this.commit()
     };
   }
 
@@ -47,14 +48,15 @@ export default class Git extends PluginBase {
    * @override
    */
   async process() {
-    const context = this.getContext();
+    const { commit } = this.getContext('git');
 
-    if (context.git.commit !== false) {
+    if (commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
   }
 
   async commit(message) {
+    message = message || this.getContext('git.commitMessage');
     const msg = ContextFormat.format(message, this.getContext());
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
@@ -63,6 +65,7 @@ export default class Git extends PluginBase {
         GitCMD.gitCommit.split(' ').concat(commitMessageArgs),
         noStdout
       );
+      this.setContext({ commited: true });
     } catch (error) {
       if (
         /nothing (added )?to commit/.test(error) ||
