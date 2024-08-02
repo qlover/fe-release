@@ -93,7 +93,12 @@ export default class Version extends PluginBase {
     // extends default version
     config.setContext(newContext);
     this.setContext(newContext);
+  }
 
+  /**
+   * @override
+   */
+  async process() {
     await this.triggerIncrementVersion();
   }
 

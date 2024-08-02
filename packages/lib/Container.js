@@ -12,6 +12,8 @@ export class Container {
     }
 
     this.instances.set(identiter, instance);
+
+    return instance;
   }
 
   /**
