@@ -100,6 +100,8 @@ export default class Version extends PluginBase {
    */
   async process() {
     await this.triggerIncrementVersion();
+
+    this.config.setContext(this.context);
   }
 
   async incrementTask({ type, value: increment }) {
