@@ -1,8 +1,10 @@
 import { EOL } from 'node:os';
 import lodash from 'lodash';
+import semver from 'semver';
 
 const log = console;
-export default class ContextFormat {
+
+export default class Util {
   /**
    * 用于格式化字符串
    *
@@ -34,5 +36,33 @@ export default class ContextFormat {
         ? `${output}${surplusText}`
         : `${output}${EOL}...and ${surplus} more`
       : output;
+  }
+
+  static sleep(ms = 16) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  static parseVersion(raw) {
+    if (raw == null)
+      return { version: raw, isPreRelease: false, preReleaseId: null };
+    const version = semver.valid(raw) ? raw : semver.coerce(raw);
+    if (!version)
+      return { version: raw, isPreRelease: false, preReleaseId: null };
+    const parsed = semver.parse(version);
+    const isPreRelease = parsed.prerelease.length > 0;
+    const preReleaseId =
+      isPreRelease && isNaN(parsed.prerelease[0]) ? parsed.prerelease[0] : null;
+    return {
+      version: version.toString(),
+      isPreRelease,
+      preReleaseId
+    };
+  }
+
+  static truncateBody(body) {
+    if (body && body.length >= 124000) return body.substring(0, 124000) + '...';
+    return body;
   }
 }

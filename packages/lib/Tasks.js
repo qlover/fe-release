@@ -1,6 +1,6 @@
 import inquirer from 'inquirer';
 import { oraPromise } from 'ora';
-import ContextFormat from './utils/ContextFormat.js';
+import Util from './Util.js';
 import { TasksTypes } from '../config/TasksConst.js';
 export default class Tasks {
   constructor(config) {
@@ -69,7 +69,7 @@ export default class Tasks {
       awaitTask = Promise.resolve(awaitTask);
     }
 
-    const text = label ? ContextFormat.format(label, context) : id;
+    const text = label ? Util.format(label, context) : id;
     this.ora(awaitTask, text);
 
     return awaitTask;

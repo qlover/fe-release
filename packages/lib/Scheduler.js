@@ -3,7 +3,6 @@ import { Logger, Shell } from '@qlover/fe-node-lib';
 import Config from './Config.js';
 import { Container } from './Container.js';
 import Tasks from './Tasks.js';
-// import Thread from './utils/Thread.js';
 export class Scheduler {
   /**
    *

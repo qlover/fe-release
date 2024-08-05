@@ -1,7 +1,7 @@
 /* eslint-disable no-template-curly-in-string */
 import PluginBase from '../PluginBase.js';
 import { TasksAction } from '../../config/TasksConst.js';
-import ContextFormat from '../utils/ContextFormat.js';
+import Util from '../Util.js';
 
 const CMD = {
   // isRepo: 'git rev-parse --git-dir',
@@ -33,7 +33,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_COMMIT,
         type: 'confirm',
         message: (context) =>
-          `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
+          `Commit (${Util.truncateLines(Util.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
         default: true,
         // not exec run methods if choose no, but prompt type alwarys exec
         run: () => this.commit(this.getContext('git.commitMessage'))
@@ -42,7 +42,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_TAG,
         type: 'confirm',
         message: (context) =>
-          `Tag (${ContextFormat.format(context.tagTemplate, context)})?`,
+          `Tag (${Util.format(context.tagTemplate, context)})?`,
         run: () => this.tag(),
         default: true
       },
@@ -85,7 +85,6 @@ export default class Git extends PluginBase {
     await this.processBefore();
     // task
     const { commit, tag, push } = this.getContext('git');
-
     if (commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
@@ -104,13 +103,13 @@ export default class Git extends PluginBase {
   getLatestTagName() {
     const context = this.getContext();
 
-    const match = ContextFormat.format(
+    const match = Util.format(
       context.tagMatch || context.tagName || '${releaseVersion}',
       context
     );
 
     const exclude = context.tagExclude
-      ? ` --exclude=${ContextFormat.format(context.tagExclude, context)}`
+      ? ` --exclude=${Util.format(context.tagExclude, context)}`
       : '';
 
     return this.exec(
@@ -124,7 +123,7 @@ export default class Git extends PluginBase {
 
   async commit(message) {
     message = message || this.getContext('git.commitMessage');
-    const msg = ContextFormat.format(message, this.getContext());
+    const msg = Util.format(message, this.getContext());
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
     try {
@@ -148,7 +147,7 @@ export default class Git extends PluginBase {
     const context = this.getContext();
     tagName = tagName || context.tagName || context.releaseVersion;
     tagAnnotation = tagAnnotation || context.tagAnnotation;
-    const message = ContextFormat.format(tagAnnotation, context);
+    const message = Util.format(tagAnnotation, context);
 
     try {
       await this.exec([

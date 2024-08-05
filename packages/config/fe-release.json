@@ -1,14 +1,15 @@
 {
   "git": {
-    "commit": true,
+    "commit": false,
     "commitMessage": "chore: FE-Release ${releaseVersion}",
-    "tag": true,
+    "tag": false,
     "tagName": null,
-    "tagAnnotation": "Release ${releaseVersion}"
+    "tagAnnotation": "Release ${releaseVersion}",
+    "push": false
   },
   "github": {
-    "release": false,
-    "releaseName": "Release ${version}",
+    "release": true,
+    "releaseName": "Release ${releaseVersion}",
     "releaseNotes": null
   }
 }
