@@ -45,7 +45,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_TAG,
         type: 'confirm',
         message: (context) =>
-          `Tag (${Util.format(context.tagTemplate, context)})?`,
+          `Tag (${Util.format(context.git.tagName, context)})?`,
         run: () => this.tag(),
         default: true
       },

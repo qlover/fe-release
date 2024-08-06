@@ -56,6 +56,7 @@
     "commander": "^11.1.0",
     "cosmiconfig": "^9.0.0",
     "cz-conventional-changelog": "^3.3.0",
+    "dotenv": "^16.4.5",
     "git-url-parse": "^14.1.0",
     "inquirer": "^10.1.0",
     "is-ci": "^3.0.1",

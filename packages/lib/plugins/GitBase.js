@@ -17,18 +17,11 @@ export default class GitBase extends PluginBase {
 
     const branchName = await this.getBranchName();
     const repo = Util.parseGitUrl(remoteUrl);
-    this.setContext({ remoteUrl, branchName, repo });
-    this.config.setContext({ remoteUrl, branchName, repo });
-
-    const { git, releaseVersion } = this.getContext();
+    const { releaseVersion } = this.getContext();
     const latestTag = (await this.getLatestTagName()) || releaseVersion;
-    const tagTemplate =
-      git.tagName ||
-      ((latestTag || '').match(/^v/)
-        ? 'v${releaseVersion}'
-        : '${releaseVersion}');
 
-    this.config.setContext({ latestTag, tagTemplate });
+    this.setContext({ remoteUrl, branchName, repo });
+    this.config.setContext({ remoteUrl, branchName, repo, latestTag });
   }
 
   getName() {
@@ -36,8 +29,8 @@ export default class GitBase extends PluginBase {
   }
 
   getLatestVersion() {
-    const { tagTemplate, latestTag } = this.config.getContext();
-    const prefix = tagTemplate.replace(/\$\{version\}/, '');
+    const { git, latestTag } = this.config.getContext();
+    const prefix = git.tagName.replace(/\$\{version\}/, '');
     return latestTag ? latestTag.replace(prefix, '').replace(/^v/, '') : null;
   }
 
@@ -64,11 +57,11 @@ export default class GitBase extends PluginBase {
   }
 
   bump(version) {
-    const { tagTemplate } = this.config.getContext();
-    const context = Object.assign(this.config.getContext(), { version });
-    const tagName = Util.format(tagTemplate, context) || version;
-    this.setContext({ version });
-    this.config.setContext({ tagName });
+    // const { tagTemplate } = this.config.getContext();
+    // const context = Object.assign(this.config.getContext(), { version });
+    // const tagName = Util.format(tagTemplate, context) || version;
+    // this.setContext({ version });
+    // this.config.setContext({ tagName });
   }
 
   isRemoteName(remoteUrlOrName) {

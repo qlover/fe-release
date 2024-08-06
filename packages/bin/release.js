@@ -4,6 +4,9 @@ import { program } from 'commander';
 import { Files } from '@qlover/fe-node-lib';
 import { Loader } from '../lib/Loader.js';
 import lodash from 'lodash';
+import { configDotenv } from 'dotenv';
+
+configDotenv({ path: ['.env.local', `.env.${process.env.NODE_ENV}`, '.env'] });
 
 const dfc = Files.readJSON(
   new URL('../config/fe-release.json', import.meta.url)

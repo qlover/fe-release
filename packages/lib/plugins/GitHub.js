@@ -3,12 +3,16 @@ import PluginBase from '../PluginBase.js';
 import Util from '../Util.js';
 import { Octokit } from '@octokit/rest';
 import fetch from 'node-fetch';
+import GitBase from './GitBase.js';
+import { Env } from '@qlover/fe-node-lib';
 
 export default class Github extends PluginBase {
   constructor(args) {
     super({ namespace: 'GitHub', ...args });
     /** @type {Octokit | null} */
     this.octokit = null;
+    /** @type {GitBase} */
+    this.gitBase = args.container.get(GitBase);
   }
 
   get client() {
@@ -20,7 +24,7 @@ export default class Github extends PluginBase {
 
     this.octokit = new Octokit({
       baseUrl,
-      auth: `token ${this.token}`,
+      auth: this.token,
       log: this.config.isDebug ? console : null,
       request: { timeout, fetch }
     });
@@ -32,16 +36,27 @@ export default class Github extends PluginBase {
    * @override
    */
   init() {
-    this.debug('github init');
+    const tokenRef = this.getContext('github.tokenRef');
+    this.token = Env.get(tokenRef, 1);
+
+    if (!this.token) {
+      this.log.warn(
+        `Environment variable "${tokenRef}" is required for automated GitHub Releases.`
+      );
+    }
+
+    this.log.log(this.token);
   }
 
   /**
    * @override
    */
   async process() {
-    const { github } = this.getContext();
+    const { release, latestTag, releaseVersion } = this.getContext('github');
 
-    if (github.release !== false) {
+    console.log(latestTag, releaseVersion);
+
+    if (release !== false) {
       await this.dispatchTask({ id: TasksAction.GITHUB_RELEASE });
     }
   }
@@ -64,74 +79,53 @@ export default class Github extends PluginBase {
     };
   }
 
-  release() {
-    this.createRelease();
+  async release() {
+    await this.createRelease();
   }
 
   async createRelease() {
     const options = this.getOctokitReleaseOptions();
-    // const { isDryRun } = this.config;
 
-    // this.log.exec(
-    //   `octokit repos.createRelease "${options.name}" (${options.tag_name})`,
-    //   { isDryRun }
-    // );
-
-    // if (isDryRun) {
-    //   this.setContext({
-    //     isReleased: true,
-    //     releaseUrl: this.getReleaseUrlFallback(options.tag_name)
-    //   });
-    //   return true;
-    // }
-
-    // return this.retry(async (bail) => {
-    // try {
     this.debug(options);
-    // const response = await this.client.repos.createRelease(options);
-    // this.debug(response.data);
-    // const { html_url, upload_url, id } = response.data;
-    // this.setContext({
-    //   isReleased: true,
-    //   releaseId: id,
-    //   releaseUrl: html_url,
-    //   upload_url
-    // });
+
+    const response = await this.client.repos.createRelease(options);
+
+    this.debug(response.data);
+
+    const { html_url: htmlUrl, upload_url: uploadUrl, id } = response.data;
+    this.setContext({
+      isReleased: true,
+      releaseId: id,
+      releaseUrl: htmlUrl,
+      upload_url: uploadUrl
+    });
     // this.config.setContext({
     //   isReleased: true,
     //   releaseId: id,
     //   releaseUrl: html_url,
     //   upload_url
     // });
-    // this.log.verbose(
-    //   `octokit repos.createRelease: done (${response.headers.location})`
-    // );
-    // return response.data;
-    // } catch (err) {
-    //   return this.handleError(err, bail);
-    // }
-    // });
+    this.log.verbose(
+      `octokit repos.createRelease: done (${response.headers.location})`
+    );
   }
 
   getOctokitReleaseOptions(options = {}) {
     const context = this.getContext();
+    const { git, github, version } = context;
     const {
       releaseName,
+      releaseDescribe,
       draft = false,
       preRelease = false,
       autoGenerate = false
-    } = context;
+    } = github;
 
     const { owner, project: repo } = context.repo;
-    const { tagName } = this.config.getContext();
-    const { version, releaseNotes, isUpdate } = this.getContext();
     const { isPreRelease } = Util.parseVersion(version);
-    const name = Util.format(releaseName, this.config.getContext());
-    const body = autoGenerate
-      ? isUpdate
-        ? null
-        : ''
-      : Util.truncateBody(releaseNotes);
+    const name = Util.format(releaseName, context);
+    const tagName = Util.format(git.tagName, context);
+    const body = autoGenerate ? '' : Util.truncateBody(releaseDescribe);
 
     return Object.assign(options, {
       owner,
