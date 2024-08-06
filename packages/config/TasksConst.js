@@ -4,7 +4,8 @@ export const TasksAction = {
   CHECK_GIT: 'Check Git',
   GIT_COMMIT: 'Git Commit',
   GIT_TAG: 'Git Tag',
-  GIT_PUSH: 'Git Push'
+  GIT_PUSH: 'Git Push',
+  GITHUB_RELEASE: 'Github Release'
 };
 
 export const TasksTypes = {

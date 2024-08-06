@@ -53,7 +53,8 @@ export default class PluginBase {
   debug(...args) {
     // In some places, the beginning of debug will be overwritten by a spinner line break,
     // and a line break will be added uniformly
-    this.log.debug(EOL, ...args);
+    this.log.print(EOL);
+    this.log.debug(...args);
   }
 
   /**

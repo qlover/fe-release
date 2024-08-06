@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 import { Scheduler } from '../lib/Scheduler.js';
 import { program } from 'commander';
-import { Logger } from '@qlover/fe-node-lib';
+import { Files } from '@qlover/fe-node-lib';
 import { Loader } from '../lib/Loader.js';
 import lodash from 'lodash';
+import { configDotenv } from 'dotenv';
+
+configDotenv({ path: ['.env.local', `.env.${process.env.NODE_ENV}`, '.env'] });
+
+const dfc = Files.readJSON(
+  new URL('../config/fe-release.json', import.meta.url)
+);
 
 function flattenToNested(obj) {
   const result = {};
@@ -24,7 +31,10 @@ function getArgs() {
       // 'patch'
     )
     .option('--no-increment', 'Disable version increment')
-    .option('--no-git.commit', 'Disable commit modified')
+    .option('--no-git.commit', 'Disable commit modified', dfc.git.commit)
+    .option('--no-git.push', 'Disable push modified', dfc.git.push)
+    .option('--no-git.tag', 'Disable tag modified', dfc.git.tag)
+    .option('--no-github.release', 'Disable github release', dfc.github.release)
     .option(
       '--ci',
       'No prompts, no user interaction; activated automatically in CI environments'
@@ -39,11 +49,10 @@ function getArgs() {
 async function main() {
   const options = getArgs();
   const scheduler = new Scheduler(flattenToNested(options));
-  const log = new Logger();
 
   await scheduler.release();
 
-  log.info('Release Finished');
+  scheduler.log.info('Release Finished');
 }
 
 main();

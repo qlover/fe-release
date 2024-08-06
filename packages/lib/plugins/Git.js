@@ -1,7 +1,8 @@
 /* eslint-disable no-template-curly-in-string */
 import PluginBase from '../PluginBase.js';
 import { TasksAction } from '../../config/TasksConst.js';
-import ContextFormat from '../utils/ContextFormat.js';
+import Util from '../Util.js';
+import GitBase from './GitBase.js';
 
 const CMD = {
   // isRepo: 'git rev-parse --git-dir',
@@ -22,6 +23,8 @@ const noStdout = { silent: true };
 export default class Git extends PluginBase {
   constructor(args) {
     super({ namespace: 'Git', ...args });
+    /** @type {GitBase} */
+    this.gitBase = args.container.get(GitBase);
   }
 
   /**
@@ -33,7 +36,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_COMMIT,
         type: 'confirm',
         message: (context) =>
-          `Commit (${ContextFormat.truncateLines(ContextFormat.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
+          `Commit (${Util.truncateLines(Util.format(this.getContext('git.commitMessage'), context), 1, ' [...]')})?`,
         default: true,
         // not exec run methods if choose no, but prompt type alwarys exec
         run: () => this.commit(this.getContext('git.commitMessage'))
@@ -42,7 +45,7 @@ export default class Git extends PluginBase {
         id: TasksAction.GIT_TAG,
         type: 'confirm',
         message: (context) =>
-          `Tag (${ContextFormat.format(context.tagTemplate, context)})?`,
+          `Tag (${Util.format(context.git.tagName, context)})?`,
         run: () => this.tag(),
         default: true
       },
@@ -65,18 +68,7 @@ export default class Git extends PluginBase {
     // }
   }
 
-  async processBefore() {
-    const { git, releaseVersion } = this.getContext();
-
-    const latestTag = (await this.getLatestTagName()) || releaseVersion;
-    const tagTemplate =
-      git.tagName ||
-      ((latestTag || '').match(/^v/)
-        ? 'v${releaseVersion}'
-        : '${releaseVersion}');
-
-    this.config.setContext({ latestTag, tagTemplate });
-  }
+  async processBefore() {}
 
   /**
    * @override
@@ -85,7 +77,6 @@ export default class Git extends PluginBase {
     await this.processBefore();
     // task
     const { commit, tag, push } = this.getContext('git');
-
     if (commit !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_COMMIT });
     }
@@ -101,30 +92,9 @@ export default class Git extends PluginBase {
     this.config.setContext(this.context);
   }
 
-  getLatestTagName() {
-    const context = this.getContext();
-
-    const match = ContextFormat.format(
-      context.tagMatch || context.tagName || '${releaseVersion}',
-      context
-    );
-
-    const exclude = context.tagExclude
-      ? ` --exclude=${ContextFormat.format(context.tagExclude, context)}`
-      : '';
-
-    return this.exec(
-      `${CMD.gitTags} --match=${match} --abbrev=0${exclude}`,
-      noStdout
-    ).then(
-      (stdout) => stdout || null,
-      () => null
-    );
-  }
-
   async commit(message) {
     message = message || this.getContext('git.commitMessage');
-    const msg = ContextFormat.format(message, this.getContext());
+    const msg = Util.format(message, this.getContext());
     const commitMessageArgs = msg ? ['--message', msg] : [];
 
     try {
@@ -148,7 +118,7 @@ export default class Git extends PluginBase {
     const context = this.getContext();
     tagName = tagName || context.tagName || context.releaseVersion;
     tagAnnotation = tagAnnotation || context.tagAnnotation;
-    const message = ContextFormat.format(tagAnnotation, context);
+    const message = Util.format(tagAnnotation, context);
 
     try {
       await this.exec([
@@ -178,18 +148,8 @@ export default class Git extends PluginBase {
     return Boolean(branch);
   }
 
-  async getBranchName() {
-    try {
-      return this.exec('git rev-parse --abbrev-ref HEAD', noStdout);
-    } catch {}
-  }
-
-  isRemoteName(remoteUrlOrName) {
-    return remoteUrlOrName && !remoteUrlOrName.includes('/');
-  }
-
   async getPushArgs(pushRepo) {
-    if (pushRepo && !this.isRemoteName(pushRepo)) {
+    if (pushRepo && !this.gitBase.isRemoteName(pushRepo)) {
       // Use (only) `pushRepo` if it's configured and looks like a url
       return [pushRepo];
     } else if (!(await this.hasUpstreamBranch())) {
@@ -197,7 +157,7 @@ export default class Git extends PluginBase {
       return [
         '--set-upstream',
         pushRepo || 'origin',
-        await this.getBranchName()
+        await this.gitBase.getBranchName()
       ];
     } else if (pushRepo && !invalidPushRepoRe.test(pushRepo)) {
       return [pushRepo];

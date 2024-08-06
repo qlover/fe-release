@@ -66,4 +66,8 @@ export default class Config {
   get isCI() {
     return !!this.context.ci;
   }
+
+  get isDebug() {
+    return this.context.debug || this.options.debug;
+  }
 }
