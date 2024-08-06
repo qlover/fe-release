@@ -2,6 +2,7 @@
 import PluginBase from '../PluginBase.js';
 import { TasksAction } from '../../config/TasksConst.js';
 import Util from '../Util.js';
+import GitBase from './GitBase.js';
 
 const CMD = {
   // isRepo: 'git rev-parse --git-dir',
@@ -22,6 +23,8 @@ const noStdout = { silent: true };
 export default class Git extends PluginBase {
   constructor(args) {
     super({ namespace: 'Git', ...args });
+    /** @type {GitBase} */
+    this.gitBase = args.container.get(GitBase);
   }
 
   /**
@@ -65,18 +68,7 @@ export default class Git extends PluginBase {
     // }
   }
 
-  async processBefore() {
-    const { git, releaseVersion } = this.getContext();
-
-    const latestTag = (await this.getLatestTagName()) || releaseVersion;
-    const tagTemplate =
-      git.tagName ||
-      ((latestTag || '').match(/^v/)
-        ? 'v${releaseVersion}'
-        : '${releaseVersion}');
-
-    this.config.setContext({ latestTag, tagTemplate });
-  }
+  async processBefore() {}
 
   /**
    * @override
@@ -98,27 +90,6 @@ export default class Git extends PluginBase {
     }
 
     this.config.setContext(this.context);
-  }
-
-  getLatestTagName() {
-    const context = this.getContext();
-
-    const match = Util.format(
-      context.tagMatch || context.tagName || '${releaseVersion}',
-      context
-    );
-
-    const exclude = context.tagExclude
-      ? ` --exclude=${Util.format(context.tagExclude, context)}`
-      : '';
-
-    return this.exec(
-      `${CMD.gitTags} --match=${match} --abbrev=0${exclude}`,
-      noStdout
-    ).then(
-      (stdout) => stdout || null,
-      () => null
-    );
   }
 
   async commit(message) {
@@ -177,18 +148,8 @@ export default class Git extends PluginBase {
     return Boolean(branch);
   }
 
-  async getBranchName() {
-    try {
-      return this.exec('git rev-parse --abbrev-ref HEAD', noStdout);
-    } catch {}
-  }
-
-  isRemoteName(remoteUrlOrName) {
-    return remoteUrlOrName && !remoteUrlOrName.includes('/');
-  }
-
   async getPushArgs(pushRepo) {
-    if (pushRepo && !this.isRemoteName(pushRepo)) {
+    if (pushRepo && !this.gitBase.isRemoteName(pushRepo)) {
       // Use (only) `pushRepo` if it's configured and looks like a url
       return [pushRepo];
     } else if (!(await this.hasUpstreamBranch())) {
@@ -196,7 +157,7 @@ export default class Git extends PluginBase {
       return [
         '--set-upstream',
         pushRepo || 'origin',
-        await this.getBranchName()
+        await this.gitBase.getBranchName()
       ];
     } else if (pushRepo && !invalidPushRepoRe.test(pushRepo)) {
       return [pushRepo];

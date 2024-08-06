@@ -29,6 +29,8 @@ function getArgs() {
     )
     .option('--no-increment', 'Disable version increment')
     .option('--no-git.commit', 'Disable commit modified', dfc.git.commit)
+    .option('--no-git.push', 'Disable push modified', dfc.git.push)
+    .option('--no-git.tag', 'Disable tag modified', dfc.git.tag)
     .option('--no-github.release', 'Disable github release', dfc.github.release)
     .option(
       '--ci',

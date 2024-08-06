@@ -13,7 +13,7 @@ export class Scheduler {
     const config = new Config({ context: options });
     const logger = new Logger({
       isCI: config.isCI,
-      debug: options.debug,
+      debug: config.isDebug,
       dryRun: false
     });
 
@@ -61,6 +61,7 @@ export class Scheduler {
     const config = {
       plugins: {
         './plugins/Version.js': {},
+        './plugins/GitBase.js': {},
         './plugins/Git.js': {},
         './plugins/GitHub.js': {}
       }

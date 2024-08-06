@@ -1,6 +1,7 @@
 import { EOL } from 'node:os';
 import lodash from 'lodash';
 import semver from 'semver';
+import gitUrlParse from 'git-url-parse';
 
 const log = console;
 
@@ -64,5 +65,34 @@ export default class Util {
   static truncateBody(body) {
     if (body && body.length >= 124000) return body.substring(0, 124000) + '...';
     return body;
+  }
+
+  /**
+   * parse git remote url info.
+   * @param {string} remoteUrl
+   * @returns
+   */
+  static parseGitUrl(remoteUrl) {
+    if (!remoteUrl)
+      return {
+        host: null,
+        owner: null,
+        project: null,
+        protocol: null,
+        remote: null,
+        repository: null
+      };
+    const normalizedUrl = (remoteUrl || '')
+      .replace(/^[A-Z]:\\\\/, 'file://') // Assume file protocol for Windows drive letters
+      .replace(/^\//, 'file://') // Assume file protocol if only /path is given
+      .replace(/\\+/g, '/'); // Replace forward with backslashes
+    const parsedUrl = gitUrlParse(normalizedUrl);
+    const { resource: host, name: project, protocol, href: remote } = parsedUrl;
+    const owner =
+      protocol === 'file'
+        ? lodash.last(parsedUrl.owner.split('/'))
+        : parsedUrl.owner; // Fix owner for file protocol
+    const repository = `${owner}/${project}`;
+    return { host, owner, project, protocol, remote, repository };
   }
 }
