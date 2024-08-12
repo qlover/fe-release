@@ -65,11 +65,15 @@ export default class PluginBase {
    */
   init() {}
 
+  /** @abstract */
+  processBefore() {}
   /**
    * plugin run logic
    * @abstract
    */
   process() {}
+  /** @abstract */
+  processAfter() {}
 
   getContext(path) {
     const context = this.config.getContext();

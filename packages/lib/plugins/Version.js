@@ -99,8 +99,8 @@ export default class Version extends PluginBase {
   }
 
   setReleaseVersion(version) {
-    this.setContext({ releaseVersion: version });
-    this.config.setContext({ releaseVersion: version });
+    this.setContext({ releaseVersion: version, completed: true });
+    this.setContext({ releaseVersion: version }, null);
   }
 
   async incrementTask({ type, value: increment }) {

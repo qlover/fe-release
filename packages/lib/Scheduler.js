@@ -57,17 +57,19 @@ export class Scheduler {
 
     // process plugins
     for (const plugin of plugins) {
+      await plugin.processBefore();
       await plugin.process();
+      await plugin.processAfter();
     }
   }
 
   async release() {
     const config = {
       plugins: {
-        // './plugins/Version.js': {},
+        './plugins/Version.js': {},
         './plugins/GitBase.js': {},
-        './plugins/Git.js': {}
-        // './plugins/GitHub.js': {}
+        './plugins/Git.js': {},
+        './plugins/GitHub.js': {}
       }
     };
 

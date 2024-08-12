@@ -5,12 +5,6 @@ import Util from '../Util.js';
 import GitBase from './GitBase.js';
 
 const CMD = {
-  // isRepo: 'git rev-parse --git-dir',
-  // branchName: 'git rev-parse --abbrev-ref HEAD',
-  // remoteByBranch: 'git config --get branch.${branch}.remote',
-  // getRemoteUrl: 'git remote get-url ${remoteNameOrUrl}',
-  // configGetRemotUrl: 'git config --get remote.${remoteNameOrUrl}.url',
-  // fetchRepo: 'git fetch',
   gitCommit: 'git commit',
   gitTags: 'git describe --tags',
   gitPush: 'git push --follow-tags',
@@ -63,18 +57,19 @@ export default class Git extends PluginBase {
    * @override
    */
   async init() {
-    // if (!(await this.isGitRepo())) {
-    //   throw new Error('not a git repo');
-    // }
+    // check release version
   }
 
-  async processBefore() {}
+  async processBefore() {
+    if (!this.getContext('version.completed')) {
+      this.setContext({ releaseVersion: this.config.latestVersion }, '');
+    }
+  }
 
   /**
    * @override
    */
   async process() {
-    await this.processBefore();
     // task
     const { commit, tag, push } = this.getContext('git');
     if (commit !== false) {
@@ -88,8 +83,6 @@ export default class Git extends PluginBase {
     if (push !== false) {
       await this.dispatchTask({ id: TasksAction.GIT_PUSH });
     }
-
-    this.config.setContext(this.context);
   }
 
   async commit(message) {
@@ -168,7 +161,8 @@ export default class Git extends PluginBase {
 
   async push() {
     const pushArgs = await this.getPushArgs();
-    const result = await this.exec(cmds(CMD.gitPush, pushArgs));
+    const result = await this.exec(cmds(CMD.gitPush, pushArgs), noStdout);
+    this.setContext({ isPushed: true });
     this.debug(result);
   }
 }
