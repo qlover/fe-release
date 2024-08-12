@@ -1,11 +1,11 @@
 {
   "git": {
-    "commit": false,
+    "commit": true,
     "commitMessage": "chore: FE-Release ${releaseVersion}",
-    "tag": false,
+    "tag": true,
     "tagName": "v${releaseVersion}",
     "tagAnnotation": "Release ${releaseVersion}",
-    "push": false
+    "push": true
   },
   "github": {
     "tokenRef": "FE_GITHUB_TOKEN",

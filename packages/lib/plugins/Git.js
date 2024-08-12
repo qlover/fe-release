@@ -22,7 +22,7 @@ const noStdout = { silent: true };
 
 export default class Git extends PluginBase {
   constructor(args) {
-    super({ namespace: 'Git', ...args });
+    super({ namespace: 'git', ...args });
     /** @type {GitBase} */
     this.gitBase = args.container.get(GitBase);
   }

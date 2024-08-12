@@ -2,7 +2,6 @@ import semver from 'semver';
 import PluginBase from '../PluginBase.js';
 import { TasksAction, TasksTypes } from '../../config/TasksConst.js';
 import chalk from 'chalk';
-import Config from '../Config.js';
 import lodash from 'lodash';
 
 const { green, red, redBright } = chalk;
@@ -15,11 +14,12 @@ const CHOICES = {
   preRelease: PRERELEASE_TYPES,
   default: [...RELEASE_TYPES, ...PRERELEASE_TYPES]
 };
+const DEFAULT_RELEASE_TYPE = RELEASE_TYPES[0];
 
 class VersionTaskUtil {
   static getIncrementChoices(context) {
     const { latestIsPreRelease, isPreRelease, preReleaseId, preReleaseBase } =
-      context.version;
+      context;
     const types = latestIsPreRelease
       ? CHOICES.latestIsPreRelease
       : isPreRelease
@@ -70,7 +70,7 @@ class VersionTaskUtil {
 
 export default class Version extends PluginBase {
   constructor(args) {
-    super({ namespace: 'Version', ...args });
+    super({ namespace: 'version', ...args });
   }
 
   /**
@@ -85,13 +85,9 @@ export default class Version extends PluginBase {
    * @override
    */
   async init() {
-    /** @type {Config} */
-    const config = this.container.get(Config);
-    const context = config.getContext();
-
+    const context = this.getContext();
     const newContext = this.expandPreReleaseShorthand(context);
-    // extends default version
-    config.setContext(newContext);
+
     this.setContext(newContext);
   }
 
@@ -100,44 +96,41 @@ export default class Version extends PluginBase {
    */
   async process() {
     await this.triggerIncrementVersion();
+  }
 
-    this.config.setContext(this.context);
+  setReleaseVersion(version) {
+    this.setContext({ releaseVersion: version });
+    this.config.setContext({ releaseVersion: version });
   }
 
   async incrementTask({ type, value: increment }) {
-    /** @type {Config} */
-    const config = this.container.get(Config);
-    const context = config.getContext();
+    const context = this.getContext();
 
     // spinner auto inc version
     if (type === TasksTypes.AUTO) {
       // await Thread.sleep(1000);
       const newVersion = this.incrementVersion(context);
-      config.setContext({ releaseVersion: newVersion });
+      this.setReleaseVersion(newVersion);
       return;
     }
 
     if (increment) {
       const newVersion = this.incrementVersion({ ...context, increment });
-      config.setContext({ releaseVersion: newVersion });
+      this.setReleaseVersion(newVersion);
       return;
     }
 
     return this.dispatchTask({
       id: TasksAction.VERSION,
-      run: (args) => {
-        config.setContext({ releaseVersion: args.value });
-      }
+      run: (args) => this.setReleaseVersion(args.value)
     });
   }
 
   async triggerIncrementVersion() {
-    /** @type {Config} */
-    const config = this.container.get(Config);
-    const context = config.getContext();
+    const context = this.getContext();
 
     if (context.increment === false) {
-      config.setContext({ releaseVersion: context.latestVersion });
+      this.setReleaseVersion(context.latestVersion);
       return;
     }
 
@@ -145,7 +138,7 @@ export default class Version extends PluginBase {
       // increment task
       const newVersion = await this.incrementVersion(context);
       // updatea version
-      config.setContext({ releaseVersion: newVersion });
+      this.setReleaseVersion(newVersion);
       return;
     }
 
@@ -167,7 +160,7 @@ export default class Version extends PluginBase {
       return latestVersion;
     }
 
-    return semver.inc(latestVersion, increment || 'patch');
+    return semver.inc(latestVersion, increment || DEFAULT_RELEASE_TYPE);
   }
 
   expandPreReleaseShorthand(options) {
@@ -181,20 +174,11 @@ export default class Version extends PluginBase {
         : typeof snapshot === 'string'
           ? snapshot
           : preReleaseId;
-    options.version = {
+    return {
       increment: inc,
       isPreRelease,
       preReleaseId: preId,
       preReleaseBase
     };
-    if (typeof snapshot === 'string' && options.git) {
-      // Pre set and hard code some options
-      options.git.tagMatch = `0.0.0-${snapshot}.[0-9]*`;
-      options.git.getLatestTagFromAllRefs = true;
-      options.git.requireBranch = '!main';
-      options.git.requireUpstream = false;
-      options.npm.ignoreVersion = true;
-    }
-    return options;
   }
 }

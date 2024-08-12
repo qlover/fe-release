@@ -39,15 +39,13 @@ function getInitOptions(options, context, loaders = {}) {
  * @private
  */
 export default class Config {
-  constructor({ context, config = {} }) {
-    this.context = lodash.merge(
-      {
-        ci: isCI,
-        latestVersion: this.latestVersion
-      },
-      context
-    );
-    this.options = getInitOptions(config, this.context);
+  constructor(context = {}) {
+    const initContext = {
+      ci: isCI,
+      latestVersion: this.latestVersion,
+      releaseVersion: ''
+    };
+    this.context = getInitOptions(context, initContext);
   }
 
   setContext(options) {
@@ -55,7 +53,7 @@ export default class Config {
   }
 
   getContext(path) {
-    const context = lodash.merge({}, this.options, this.context);
+    const context = lodash.merge({}, this.context);
     return path ? lodash.get(context, path) : context;
   }
 
@@ -68,6 +66,6 @@ export default class Config {
   }
 
   get isDebug() {
-    return this.context.debug || this.options.debug;
+    return !!this.context.debug;
   }
 }

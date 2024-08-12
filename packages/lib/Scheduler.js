@@ -10,7 +10,7 @@ export class Scheduler {
    */
   constructor(options = {}) {
     this.container = new Container();
-    const config = new Config({ context: options });
+    const config = new Config(options);
     const logger = new Logger({
       isCI: config.isCI,
       debug: config.isDebug,
@@ -35,7 +35,11 @@ export class Scheduler {
     const container = this.container;
 
     const onPlugin = async ({ namespace, Plugin, props }) => {
-      const instance = new Plugin({ namespace, ...props, container });
+      const instance = new Plugin({
+        namespace: namespace.toLocaleLowerCase(),
+        ...props,
+        container
+      });
 
       // await Thread.sleep(1000);
       await instance.init(props);
@@ -60,10 +64,10 @@ export class Scheduler {
   async release() {
     const config = {
       plugins: {
-        './plugins/Version.js': {},
+        // './plugins/Version.js': {},
         './plugins/GitBase.js': {},
-        './plugins/Git.js': {},
-        './plugins/GitHub.js': {}
+        './plugins/Git.js': {}
+        // './plugins/GitHub.js': {}
       }
     };
 

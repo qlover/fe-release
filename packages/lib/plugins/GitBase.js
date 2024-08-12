@@ -4,11 +4,10 @@ import Util from '../Util.js';
 import PluginBase from '../PluginBase.js';
 
 const noStdout = { silent: true };
-const changelogFallback = 'git log --pretty=format:"* %s (%h)"';
 
 export default class GitBase extends PluginBase {
   constructor(args) {
-    super({ namespace: 'GitBase', ...args });
+    super({ ...args, namespace: 'git' });
   }
 
   async init() {
@@ -17,51 +16,15 @@ export default class GitBase extends PluginBase {
 
     const branchName = await this.getBranchName();
     const repo = Util.parseGitUrl(remoteUrl);
-    const { releaseVersion } = this.getContext();
-    const latestTag = (await this.getLatestTagName()) || releaseVersion;
+    // TODO: Get a real last tagname, if has `RelesaeVersion`
+    const latestTag = await this.getLatestTagName();
 
-    this.setContext({ remoteUrl, branchName, repo });
-    this.config.setContext({ remoteUrl, branchName, repo, latestTag });
-  }
-
-  getName() {
-    return this.getContext('repo.project');
+    this.setContext({ remoteUrl, branchName, repo, latestTag });
   }
 
   getLatestVersion() {
-    const { git, latestTag } = this.config.getContext();
-    const prefix = git.tagName.replace(/\$\{version\}/, '');
-    return latestTag ? latestTag.replace(prefix, '').replace(/^v/, '') : null;
-  }
-
-  async getChangelog() {
-    const { snapshot } = this.config.getContext();
-    const { latestTag, secondLatestTag } = this.config.getContext();
-    const context = { latestTag, from: latestTag, to: 'HEAD' };
-    const { changelog } = this.options;
-    if (!changelog) return null;
-
-    if (latestTag && !this.config.isIncrement) {
-      context.from = secondLatestTag;
-      context.to = `${latestTag}^1`;
-    }
-
-    // For now, snapshots do not get a changelog, as it often goes haywire (easy to add to release manually)
-    if (snapshot) return '';
-
-    if (!context.from && changelog.includes('${from}')) {
-      return this.exec(changelogFallback);
-    }
-
-    return this.exec(changelog, noStdout, context);
-  }
-
-  bump(version) {
-    // const { tagTemplate } = this.config.getContext();
-    // const context = Object.assign(this.config.getContext(), { version });
-    // const tagName = Util.format(tagTemplate, context) || version;
-    // this.setContext({ version });
-    // this.config.setContext({ tagName });
+    const { latestTag } = this.getContext(this.namespace);
+    return latestTag ? latestTag.replace(/^v/, '') : null;
   }
 
   isRemoteName(remoteUrlOrName) {
