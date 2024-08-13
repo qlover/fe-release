@@ -69,7 +69,8 @@ export class Scheduler {
         './plugins/Version.js': {},
         './plugins/GitBase.js': {},
         './plugins/Git.js': {},
-        './plugins/GitHub.js': {}
+        './plugins/GitHub.js': {},
+        './plugins/NPM.js': {}
       }
     };
 
