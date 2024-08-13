@@ -119,7 +119,7 @@ export default class Github extends PluginBase {
       autoGenerate = false
     } = github;
 
-    const { owner, project: repo } = context.repo;
+    const { owner, project: repo } = context.git.repo;
     const { isPreRelease } = Util.parseVersion(version);
     const name = Util.format(releaseName, context);
     const tagName = Util.format(git.tagName, context);
