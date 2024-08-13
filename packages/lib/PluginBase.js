@@ -60,7 +60,7 @@ export default class PluginBase {
   getTaskList() {}
 
   /**
-   * plugin init logic
+   * plugin init logic, because constructor not support async/await
    * @abstract
    */
   init() {}

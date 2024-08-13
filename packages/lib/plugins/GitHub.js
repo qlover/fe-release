@@ -8,7 +8,7 @@ import { Env } from '@qlover/fe-node-lib';
 
 export default class Github extends PluginBase {
   constructor(args) {
-    super({ namespace: 'GitHub', ...args });
+    super({ ...args });
     /** @type {Octokit | null} */
     this.octokit = null;
     /** @type {GitBase} */
@@ -17,8 +17,8 @@ export default class Github extends PluginBase {
 
   get client() {
     if (this.octokit) return this.octokit;
-    const { timeout } = this.getContext();
-    const host = this.context.host || this.getContext('repo.host');
+    const { timeout, git } = this.getContext();
+    const { host } = git.repo;
     const isGitHub = host === 'github.com';
     const baseUrl = `https://${isGitHub ? 'api.github.com' : host}${isGitHub ? '' : '/api/v3'}`;
 
@@ -44,8 +44,6 @@ export default class Github extends PluginBase {
         `Environment variable "${tokenRef}" is required for automated GitHub Releases.`
       );
     }
-
-    this.log.log(this.token);
   }
 
   /**
@@ -119,7 +117,7 @@ export default class Github extends PluginBase {
       autoGenerate = false
     } = github;
 
-    const { owner, project: repo } = context.repo;
+    const { owner, project: repo } = context.git.repo;
     const { isPreRelease } = Util.parseVersion(version);
     const name = Util.format(releaseName, context);
     const tagName = Util.format(git.tagName, context);

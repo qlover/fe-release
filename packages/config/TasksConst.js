@@ -5,7 +5,9 @@ export const TasksAction = {
   GIT_COMMIT: 'Git Commit',
   GIT_TAG: 'Git Tag',
   GIT_PUSH: 'Git Push',
-  GITHUB_RELEASE: 'Github Release'
+  GITHUB_RELEASE: 'Github Release',
+  NPM_OTP: 'Npm OTP',
+  NPM_PUBLISH: 'Npm Publish'
 };
 
 export const TasksTypes = {
