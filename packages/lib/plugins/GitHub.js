@@ -52,9 +52,7 @@ export default class Github extends PluginBase {
    * @override
    */
   async process() {
-    const { release, latestTag, releaseVersion } = this.getContext('github');
-
-    console.log(latestTag, releaseVersion);
+    const { release } = this.getContext('github');
 
     if (release !== false) {
       await this.dispatchTask({ id: TasksAction.GITHUB_RELEASE });

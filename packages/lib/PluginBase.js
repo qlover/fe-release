@@ -42,11 +42,6 @@ export default class PluginBase {
     /** @type {Tasks} */
     this.tasks = container.get(Tasks);
 
-    /**
-     * only every plugin context
-     */
-    this.context = {};
-
     setup(container, { tasks: this.getTaskList() });
   }
 
@@ -70,29 +65,35 @@ export default class PluginBase {
    */
   init() {}
 
+  /** @abstract */
+  processBefore() {}
   /**
    * plugin run logic
    * @abstract
    */
   process() {}
+  /** @abstract */
+  processAfter() {}
 
   getContext(path) {
-    const context = lodash.merge({}, this.config.getContext(), this.context);
+    const context = this.config.getContext();
     return path ? lodash.get(context, path) : context;
   }
 
-  setContext(context) {
-    lodash.merge(this.context, context);
+  setContext(context, scope = this.namespace) {
+    if (scope) {
+      this.config.setContext({ [scope]: context });
+      return;
+    }
+
+    return this.config.setContext(context);
   }
 
   dispatchTask(options) {
-    const taskOpts = Object.assign(
-      {
-        runType: this.config.isCI ? 'spinner' : 'prompt'
-      },
-      { context: this.getContext() },
-      options
-    );
+    const taskOpts = Object.assign({ context: this.getContext() }, options, {
+      runType: this.config.isCI ? 'spinner' : 'prompt'
+    });
+
     return this.tasks.dispatch(taskOpts);
   }
 
